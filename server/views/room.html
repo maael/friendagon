@@ -1,0 +1,25 @@
+<html>
+  <head>
+    <title>Friendagon | Room</title>
+    <script src='/public/js/socket.js'></script>
+    <script src='/public/js/phaser.js'></script>
+    <script src='/public/js/index.js'></script>
+    <script src='/public/js/game.js'></script>
+  </head>
+  <body>
+    <p>Game</p>
+    <div id='game-state'></div>
+    <form>
+      <input id='user-name' type='text' name='name' />
+      <select id='user-shape'>
+        <option value='triangle'>Triangle</option>
+        <option value='square'>Square</option>
+        <option value='circle'>Circle</option>
+        <option value='hexagon'>Hexagon</option>
+        <option value='diamond'>Diamond</option>
+        <option value='asterisk'>Asterisk</option>
+      </select>
+      <button id='submit-name'>Set</button>
+    </form>
+  </body>
+</html>
