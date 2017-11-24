@@ -12,7 +12,6 @@
   "dependencies": {
     "compression": "^1.7.1",
     "express": "^4.16.2",
-    "nw": "^0.26.6",
     "phaser": "^2.6.2",
     "randomcolor": "^0.5.3",
     "serve-static": "^1.13.1",
