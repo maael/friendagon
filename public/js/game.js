@@ -78,6 +78,10 @@ function preload () {
       ${Object.keys(gameState).map((player) => (`<span style='color: #${gameState[player].color}'>(${gameState[player].shape || '?????'}) ${gameState[player].name}`)).join('</span><br>')}
     `
   })
+  socket.on('game/update/ring', (data) => {
+    const ring = createRing(data.ring)
+    animationState.groups.rings.add(ring.graphic)
+  })
 
   document.querySelector('#submit-name').onclick = (e) => {
     e.preventDefault()
@@ -102,7 +106,6 @@ function create() {
   animationState.groups.rings = game.add.group()
   animationState.groups.background = game.add.group()
   createBackground()
-  game.debug.geom(new Phaser.Point((gameSettings.width / 2), (gameSettings.height / 2)), '#ffff00')
 }
 
 function update() {
@@ -161,10 +164,6 @@ function update() {
     }
     return rings
   }, [].concat(animationState.rings))
-  if (animationState.rings.length < 2 && (!animationState.rings[animationState.rings.length - 1] || animationState.rings[animationState.rings.length - 1].state.distance < 500)) {
-    const ring = createRing()
-    animationState.groups.rings.add(ring.graphic)
-  }
 
   game.world.bringToTop(animationState.groups.background)
   game.world.bringToTop(animationState.groups.rings)
@@ -215,17 +214,8 @@ function createBackground () {
   animationState.groups.background.add(createPoly(5, 0xFFFFFF))
 }
 
-function createRing () {
-  const presets = [
-    [ 0, 1, 2, 3, 4 ],
-    [ 0, 1, 2, 3, 5 ],
-    [ 0, 1, 2, 4, 5 ],
-    [ 0, 1, 3, 4, 5 ],
-    [ 0, 2, 3, 4, 5 ],
-    [ 1, 2, 3, 4, 5 ]
-  ]
-  const selected = Math.floor(Math.random() * presets.length)
-  const state = { distance: 800, indexes: presets[selected], color: 0x000000, width: 20 }
+function createRing (data) {
+  const state = { distance: 800, indexes: data, color: 0x000000, width: 20 }
   const polyData = batchPolys(state.indexes, state.color, state.width, state.distance)
   const ring = { state, graphic: polyData.graphic, polys: polyData.polys }
   animationState.rings.push(ring)

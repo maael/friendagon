@@ -37,6 +37,7 @@ app.get('/room/:room', (req, res) => {
 server.listen(3000)
 
 let gameStates = {}
+let games = {}
 
 const shapes = [ 'triangle', 'square', 'circle', 'hexagon', 'diamond', 'asterisk' ]
 
@@ -50,6 +51,10 @@ io.sockets.on('connection', (socket) => {
     const connected = Object.keys(io.sockets.adapter.rooms[data.room].sockets)
     socket.emit('player/name', { name: sillyname(), shape: shapes[0], color: randomColor({ luminosity: 'light' }).replace('#', '') })
     io.to(data.room).emit('room/change', { room: data.room, connected })
+    if (!games[room]) {
+      console.log('new room', room)
+      games[room] = startGame(io, data)
+    }
   })
 
   socket.on('game/player/update', (data) => {
@@ -61,9 +66,30 @@ io.sockets.on('connection', (socket) => {
   socket.on('disconnect', (a, b, c, d) => {
     if (room) {
       delete gameStates[room][socket.id]
-      if (!Object.keys(gameStates[room]).length) delete gameStates[room]
+      if (!Object.keys(gameStates[room]).length) {
+        clearInterval(games[room])
+        delete games[room]
+        delete gameStates[room]
+      }
       const connected = io.sockets.adapter.rooms[room] && Object.keys(io.sockets.adapter.rooms[room].sockets)
       if (connected) io.to(room).emit('room/change', { room: room, connected })
     }
   })
 })
+
+function startGame (io, data) {
+  const presets = [
+    [ 0, 1, 2, 3, 4 ],
+    [ 0, 1, 2, 3, 5 ],
+    [ 0, 1, 2, 4, 5 ],
+    [ 0, 1, 3, 4, 5 ],
+    [ 0, 2, 3, 4, 5 ],
+    [ 1, 2, 3, 4, 5 ]
+  ]
+  return setInterval(() => {
+    const selected = Math.floor(Math.random() * presets.length)
+    io.to(data.room).emit('game/update/ring', {
+      ring: presets[selected]
+    })
+  }, 1500)
+}
