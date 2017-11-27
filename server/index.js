@@ -17,6 +17,13 @@ app.get('/public/js/socket.js', (req, res) => {
   })
 })
 
+app.get('/public/js/randomColor.js', (req, res) => {
+  fs.readFile(path.resolve(path.join(__dirname, '..', 'node_modules', 'randomcolor', 'randomColor.js')), (err, data) => {
+    if (err) return res.status(500).send(err)
+    res.send(data)
+  })
+})
+
 app.get('/public/js/phaser.js', (req, res) => {
   fs.readFile(path.resolve(path.join(__dirname, '..', 'node_modules', 'phaser', 'build', 'phaser.js')), (err, data) => {
     if (err) return res.status(500).send(err)
@@ -39,6 +46,10 @@ server.listen(3000)
 let gameStates = {}
 let games = {}
 
+app.get('/api/rooms', (req, res) => {
+  res.send(gameStates)
+})
+
 const shapes = [ 'triangle', 'square', 'circle', 'hexagon', 'diamond', 'asterisk' ]
 
 io.sockets.on('connection', (socket) => {
@@ -49,7 +60,7 @@ io.sockets.on('connection', (socket) => {
     gameStates[room] = gameStates[room] || {}
     gameStates[room][socket.id] = { rotation: 0 }
     const connected = Object.keys(io.sockets.adapter.rooms[data.room].sockets)
-    socket.emit('player/name', { name: sillyname(), shape: shapes[0], color: randomColor({ luminosity: 'light' }).replace('#', '') })
+    socket.emit('player/name', { name: sillyname(), shape: shapes[0], color: randomColor({ luminosity: 'light' }).replace('#', ''), alive: true })
     io.to(data.room).emit('room/change', { room: data.room, connected })
     if (!games[room]) {
       console.log('new room', room)
@@ -58,7 +69,7 @@ io.sockets.on('connection', (socket) => {
   })
 
   socket.on('game/player/update', (data) => {
-    gameStates[data.room][data.socket] = Object.assign(gameStates[data.room][data.socket] || {}, { name: data.name, rotation: data.rotation, shape: data.shape, color: data.color })
+    gameStates[data.room][data.socket] = Object.assign(gameStates[data.room][data.socket] || {}, { name: data.name, rotation: data.rotation, shape: data.shape, color: data.color, alive: data.alive })
     io.to(data.room).emit('game/update', gameStates[data.room])
     console.log(gameStates[data.room][data.socket])
   })
@@ -91,5 +102,5 @@ function startGame (io, data) {
     io.to(data.room).emit('game/update/ring', {
       ring: presets[selected]
     })
-  }, 1500)
+  }, 1300)
 }

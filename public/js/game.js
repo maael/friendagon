@@ -20,6 +20,7 @@ class Player {
     this.shape = undefined
     this.name = '?????'
     this.color = 'FFFFFF'
+    this.alive = true
   }
 
   setName (name) {
@@ -44,18 +45,23 @@ class Player {
     this.update()
   }
 
+  die () {
+    this.alive = false
+    this.update()
+  }
+
   update () {
     this.socket.emit('game/player/update', this.getState())
   }
 
   getState () {
-    return { rotation: this.rotation, socket: this.socket.id, room: this.room, name: this.name, shape: this.shape, color: this.color }
+    return { rotation: this.rotation, socket: this.socket.id, room: this.room, name: this.name, shape: this.shape, color: this.color, alive: this.alive }
   }
 }
 
 let socket, player;
 
-let animationState = { players: {}, rings: [], groups: { top: undefined, players: undefined, rings: undefined, background: undefined } }
+let animationState = { players: {}, background: { tint: randomColor({ luminosity: 'bright' }).replace('#', '') }, rings: [], groups: { top: undefined, players: undefined, rings: undefined, background: undefined, emitter: undefined }, music: undefined }
 
 function preload () {
   socket = io.connect()
@@ -93,6 +99,8 @@ function preload () {
   }
 
   game.load.image('heart', '/public/imgs/heart.gif')
+  game.load.spritesheet('balls', '/public/imgs/balls.png', 17, 17)
+  game.load.audio('black_kitty', '/public/music/black_kitty.mp3')
 }
 
 function create() {
@@ -101,10 +109,15 @@ function create() {
   controls.right = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT)
   game.world.pivot = new Phaser.Point((0, 0))
   game.world.rotation = 0
+  animationState.groups.emitter = game.add.group()
   animationState.groups.top = game.add.group()
   animationState.groups.players = game.add.group()
   animationState.groups.rings = game.add.group()
   animationState.groups.background = game.add.group()
+  animationState.music = game.add.audio('black_kitty')
+  game.sound.setDecodedCallback([ animationState.music ], () => {
+    animationState.music.loopFull(1)
+  }, this)
   createBackground()
 }
 
@@ -118,16 +131,20 @@ function update() {
 
   Object.keys(window.gameState || {}).forEach((playerId) => {
     if (playerId !== player.socket.id) {
-      if (!animationState.players[playerId]) {
-        animationState.players[playerId] = createSprite(window.gameState[playerId].color)
+      if (window.gameState[playerId].alive) {
+        if (!animationState.players[playerId]) {
+          animationState.players[playerId] = createSprite(window.gameState[playerId].color)
 
-        animationState.players[playerId].tint = `0x${window.gameState[playerId].color}`
-        animationState.players[playerId].pivot.x = gameSettings.radius
-        animationState.players[playerId].anchor.set(0.5)
-        animationState.groups.players.add(animationState.players[playerId])
+          animationState.players[playerId].tint = `0x${window.gameState[playerId].color}`
+          animationState.players[playerId].pivot.x = gameSettings.radius
+          animationState.players[playerId].anchor.set(0.5)
+          animationState.groups.players.add(animationState.players[playerId])
+        } else {
+          animationState.players[playerId].tint = `0x${window.gameState[playerId].color}`
+          animationState.players[playerId].rotation = window.gameState[playerId].rotation * Math.PI / 180
+        }
       } else {
-        animationState.players[playerId].tint = `0x${window.gameState[playerId].color}`
-        animationState.players[playerId].rotation = window.gameState[playerId].rotation * Math.PI / 180
+        if (animationState.players[playerId]) animationState.players[playerId].destroy()
       }
     } else {
       if (!animationState.player) {
@@ -151,7 +168,7 @@ function update() {
   })
   animationState.rings = animationState.rings.reduce((rings, ring, i) => {
     ring.graphic.destroy()
-    ring.state.distance = ring.state.distance - 5 > 0 ? ring.state.distance - 5 : 0
+    ring.state.distance = ring.state.distance - 10 > 0 ? ring.state.distance - 10 : 0
     if (ring.state.distance !== 0) {
       const polyData = batchPolys(ring.state.indexes, ring.state.color, ring.state.width, ring.state.distance)
       ring.graphic = polyData.graphic
@@ -169,12 +186,15 @@ function update() {
   game.world.bringToTop(animationState.groups.rings)
   game.world.bringToTop(animationState.groups.players)
   game.world.bringToTop(animationState.groups.top)
+  game.world.bringToTop(animationState.groups.emitter)
 
   if (animationState.player) {
     animationState.rings.forEach((ring) => {
       ring.polys.forEach((poly) => {
         if (poly.contains(animationState.player.worldPosition.x, animationState.player.worldPosition.y)) {
+          death()
           animationState.player.destroy()
+          player.die()
         }
       })
     })
@@ -206,16 +226,17 @@ function createGraphic (color) {
 }
 
 function createBackground () {
-  animationState.groups.background.add(createPoly(0, 0xFF33FF))
+  animationState.groups.background.add(createPoly(0, 0xAAAAAA))
   animationState.groups.background.add(createPoly(1, 0xFFFFFF))
-  animationState.groups.background.add(createPoly(2, 0xFF33FF))
+  animationState.groups.background.add(createPoly(2, 0xAAAAAA))
   animationState.groups.background.add(createPoly(3, 0xFFFFFF))
-  animationState.groups.background.add(createPoly(4, 0xFF33FF))
+  animationState.groups.background.add(createPoly(4, 0xAAAAAA))
   animationState.groups.background.add(createPoly(5, 0xFFFFFF))
 }
 
 function createRing (data) {
-  const state = { distance: 800, indexes: data, color: 0x000000, width: 20 }
+  const width = 20 + Math.floor(Math.random() * 100)
+  const state = { distance: 800, indexes: data, color: 0x444444, width }
   const polyData = batchPolys(state.indexes, state.color, state.width, state.distance)
   const ring = { state, graphic: polyData.graphic, polys: polyData.polys }
   animationState.rings.push(ring)
@@ -240,7 +261,7 @@ function createPoly (i, color) {
   graphics.beginFill(color)
   graphics.drawPolygon(poly.points)
   graphics.endFill()
-  if (i % 2 === 1) graphics.tint = 0xFF3333
+  graphics.tint = `0x${animationState.background.tint}`
   return graphics
 }
 
@@ -261,7 +282,7 @@ function createPolyPart (i, color, width, distance) {
   graphics.beginFill(color)
   graphics.drawPolygon(poly.points)
   graphics.endFill()
-  if (i % 2 === 1) graphics.tint = 0xFF3333
+  if (i % 2 === 1) graphics.tint = animationState.background.tint
   return graphics
 }
 
@@ -275,6 +296,19 @@ function batchPolys (indexes, color, width, distance) {
     polys.push(poly)
     graphics.drawPolygon(poly.points)
   })
+  graphics.tint = `0x${animationState.background.tint}`
   graphics.endFill()
   return { polys, graphic: graphics }
+}
+
+function death () {
+  if (animationState.groups.emitter.children.length === 0) {
+    const emitter = game.add.emitter(animationState.player.worldPosition.x, animationState.player.worldPosition.y, 100)
+    emitter.makeParticles('balls', [0, 1, 2, 3, 4, 5])
+    emitter.minParticleSpeed.setTo(-400, -400)
+    emitter.maxParticleSpeed.setTo(400, 400)
+    emitter.gravity = 0
+    emitter.start(true, 0, undefined, 2000)
+    animationState.groups.emitter.add(emitter)
+  }
 }
