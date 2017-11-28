@@ -162,6 +162,7 @@ function preload () {
   game.load.spritesheet('balls', '/public/imgs/balls.png', 17, 17)
   game.load.audio('black_kitty', '/public/music/black_kitty.mp3')
   game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
+  game.animations = new Animations(game)
 }
 
 function create() {
@@ -300,6 +301,7 @@ function createBackground () {
   animationState.groups.background.add(createPoly(3, 0xFFFFFF))
   animationState.groups.background.add(createPoly(4, 0xAAAAAA))
   animationState.groups.background.add(createPoly(5, 0xFFFFFF))
+  animateBackground()
 }
 
 function createRing (data) {
@@ -331,6 +333,17 @@ function createPoly (i, color) {
   graphics.endFill()
   graphics.tint = `0x${animationState.background.tint}`
   return graphics
+}
+
+function animateBackground () {
+  setInterval(() => {
+    const newTint = randomColor({ luminosity: 'bright' }).replace('#', '')
+    animationState.groups.background.children.forEach((b) => {
+      game.animations.tweenTint(b, `0x${animationState.background.tint}`, `0x${newTint}`, 1000, () => {
+        animationState.background.tint = newTint
+      })
+    })
+  }, 10000)
 }
 
 function createPolyPartPoints (i, width, distance) {
@@ -383,3 +396,27 @@ function death () {
     showDeathText()
   }
 }
+
+class Animations {
+  constructor(game) {
+    this.game = game;
+  }
+
+  tweenTint(obj, startColor, endColor, time = 250, callback = null) {
+    if (obj) {
+      let colorBlend = { step: 0 };
+      let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, time);
+      colorTween.onUpdateCallback(() => {
+        obj.tint = Phaser.Color.interpolateColor(startColor, endColor, 100, colorBlend.step);
+      });
+      obj.tint = startColor;
+      if (callback) {
+        colorTween.onComplete.add(() => {
+          callback();
+        });
+      }
+      colorTween.start();
+    }
+  }
+}
+
