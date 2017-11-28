@@ -12,6 +12,18 @@ const controls = {
   restart: {}
 }
 
+window.onload = () => {
+  let word = ''
+  document.body.addEventListener('keyup', (e) => {
+    if (!e.metaKey) word += e.key
+    if (word.includes('nug') || word.includes('sket')) {
+      if (word.includes('nug')) player.temporary = { special: { sprite: 'nug' } }
+      else if (word.includes('sket')) player.temporary = { special: { sprite: 'wine' } }
+      word = ''
+    }
+  })
+}
+
 const deathMessages = [
   'This is the end\nof the line!',
   'Oh hex! You\'re dead.',
@@ -37,6 +49,7 @@ class Player {
     this.time = 0
     this.funeral = undefined
     this.heartbeat = this.beat()
+    this.temporary = { special: {} }
   }
 
   setName (name) {
@@ -180,6 +193,8 @@ function preload () {
   }
 
   game.load.image('heart', '/public/imgs/heart.gif')
+  game.load.image('wine', '/public/imgs/wine.png')
+  game.load.image('nug', '/public/imgs/nug.png')
   game.load.spritesheet('balls', '/public/imgs/balls.png', 17, 17)
   game.load.audio('black_kitty', '/public/music/black_kitty.mp3')
   game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
@@ -236,13 +251,13 @@ function update () {
     } else {
       if (player.alive) {
         if (!animationState.player || !animationState.player.alive) {
-          animationState.player = createSprite(player.color)
-          animationState.player.tint = `0x${player.color}`
+          animationState.player = createSprite(player.color, player.temporary)
+          if (!player.temporary.special.sprite) animationState.player.tint = `0x${player.color}`
           animationState.player.pivot.x = gameSettings.radius
           animationState.player.anchor.set(0.5)
           animationState.groups.top.add(animationState.player)
         } else {
-          animationState.player.tint = `0x${player.color}`
+          if (!player.temporary.special.sprite) animationState.player.tint = `0x${player.color}`
           animationState.player.rotation = player.rotation * Math.PI / 180
         }
       }
@@ -296,10 +311,18 @@ function render () {
 }
 
 function createSprite (color, options) {
-  options = options || { offset: 0 }
-  const graphic = createGraphic(color)
-  const sprite = game.add.sprite(game.world.centerX - (options.offset), game.world.centerY - (options.offset), graphic.generateTexture())
-  graphic.destroy()
+  options = Object.assign({ offset: 0, special: {} }, options)
+  let playerImage
+  if (options.special.sprite) {
+    playerImage = options.special.sprite
+  } else {
+    const graphic = createGraphic(color)
+    playerImage = graphic.generateTexture()
+    graphic.destroy()
+  }
+  const sprite = game.add.sprite(game.world.centerX - (options.offset), game.world.centerY - (options.offset), playerImage)
+  if (options.special.sprite === 'nug') sprite.scale.setTo(0.25, 0.25)
+  else if (options.special.sprite === 'wine') sprite.scale.setTo(0.1, 0.1)
   return sprite
 }
 
