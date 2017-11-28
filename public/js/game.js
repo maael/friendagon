@@ -8,8 +8,19 @@ const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUT
 
 const controls = {
   left: {},
-  right: {}
+  right: {},
+  restart: {}
 }
+
+const deathMessages = [
+  'This is the end\nof the line!',
+  'Oh hex! You\'re dead.',
+  'You squared off\nand failed.',
+  'It\'s all come\nfull circle',
+  'Quick and to the point',
+  'Doh!(decahedron)',
+  'I don\'t have\nenough shape puns'
+]
 
 class Player {
   constructor (socket, room) {
@@ -45,6 +56,12 @@ class Player {
     this.update()
   }
 
+  restart () {
+    this.alive = true
+    this.rotation = 0
+    this.update()
+  }
+
   die () {
     this.alive = false
     this.update()
@@ -59,9 +76,52 @@ class Player {
   }
 }
 
+WebFontConfig = {
+    google: {
+      families: ['Revalia']
+    }
+}
+
+function showDeathText () {
+    const deathIndex = Math.floor(Math.random() * deathMessages.length)
+    const text = game.add.text(game.world.centerX, game.world.centerY, `- You're dead -\n${deathMessages[deathIndex]}`)
+    text.anchor.setTo(0.5)
+    text.font = 'Revalia'
+    text.fontSize = 60
+    text.fill = `#${animationState.background.tint}`
+    text.align = 'center'
+    text.stroke = '#000000'
+    text.strokeThickness = 2
+    text.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5)
+    const resetText = game.add.text(game.world.centerX, game.world.centerY + 200, 'Press r to restart')
+    resetText.anchor.setTo(0.5)
+    resetText.font = 'Revalia'
+    resetText.fontSize = 20
+    resetText.fill = `#${animationState.background.tint}`
+    resetText.align = 'center'
+    resetText.stroke = '#000000'
+    resetText.strokeThickness = 2
+    resetText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5)
+    animationState.groups.deathOverlay.add(text)
+    animationState.groups.deathOverlay.add(resetText)
+}
+
 let socket, player;
 
-let animationState = { players: {}, background: { tint: randomColor({ luminosity: 'bright' }).replace('#', '') }, rings: [], groups: { top: undefined, players: undefined, rings: undefined, background: undefined, emitter: undefined }, music: undefined }
+let animationState = {
+  players: {},
+  background: { tint: randomColor({ luminosity: 'bright' }).replace('#', '') },
+  rings: [],
+  groups: {
+    top: undefined,
+    players: undefined,
+    rings: undefined,
+    background: undefined,
+    emitter: undefined,
+    deathOverlay: undefined
+  },
+  music: undefined
+}
 
 function preload () {
   socket = io.connect()
@@ -101,19 +161,19 @@ function preload () {
   game.load.image('heart', '/public/imgs/heart.gif')
   game.load.spritesheet('balls', '/public/imgs/balls.png', 17, 17)
   game.load.audio('black_kitty', '/public/music/black_kitty.mp3')
+  game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
 }
 
 function create() {
   game.stage.backgroundColor = '#333333'
   controls.left = game.input.keyboard.addKey(Phaser.Keyboard.LEFT)
   controls.right = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT)
+  controls.restart = game.input.keyboard.addKey(Phaser.Keyboard.R)
   game.world.pivot = new Phaser.Point((0, 0))
   game.world.rotation = 0
-  animationState.groups.emitter = game.add.group()
-  animationState.groups.top = game.add.group()
-  animationState.groups.players = game.add.group()
-  animationState.groups.rings = game.add.group()
-  animationState.groups.background = game.add.group()
+  Object.keys(animationState.groups).forEach((group) => {
+    animationState.groups[group] = game.add.group()
+  })
   animationState.music = game.add.audio('black_kitty')
   game.sound.setDecodedCallback([ animationState.music ], () => {
     animationState.music.loopFull(1)
@@ -121,12 +181,17 @@ function create() {
   createBackground()
 }
 
-function update() {
+function update () {
   if (controls.left.isDown) {
     player.rotate(-1)
   }
   if (controls.right.isDown) {
     player.rotate(1)
+  }
+  if (controls.restart.isDown) {
+    player.restart()
+    animationState.groups.emitter.removeAll()
+    animationState.groups.deathOverlay.removeAll()
   }
 
   Object.keys(window.gameState || {}).forEach((playerId) => {
@@ -147,15 +212,17 @@ function update() {
         if (animationState.players[playerId]) animationState.players[playerId].destroy()
       }
     } else {
-      if (!animationState.player) {
-        animationState.player = createSprite(player.color)
-        animationState.player.tint = `0x${player.color}`
-        animationState.player.pivot.x = gameSettings.radius
-        animationState.player.anchor.set(0.5)
-        animationState.groups.top.add(animationState.player)
-      } else {
-        animationState.player.tint = `0x${player.color}`
-        animationState.player.rotation = player.rotation * Math.PI / 180
+      if (player.alive) {
+        if (!animationState.player || !animationState.player.alive) {
+          animationState.player = createSprite(player.color)
+          animationState.player.tint = `0x${player.color}`
+          animationState.player.pivot.x = gameSettings.radius
+          animationState.player.anchor.set(0.5)
+          animationState.groups.top.add(animationState.player)
+        } else {
+          animationState.player.tint = `0x${player.color}`
+          animationState.player.rotation = player.rotation * Math.PI / 180
+        }
       }
     }
   })
@@ -187,6 +254,7 @@ function update() {
   game.world.bringToTop(animationState.groups.players)
   game.world.bringToTop(animationState.groups.top)
   game.world.bringToTop(animationState.groups.emitter)
+  game.world.bringToTop(animationState.groups.deathOverlay)
 
   if (animationState.player) {
     animationState.rings.forEach((ring) => {
@@ -310,5 +378,8 @@ function death () {
     emitter.gravity = 0
     emitter.start(true, 0, undefined, 2000)
     animationState.groups.emitter.add(emitter)
+  }
+  if (animationState.groups.deathOverlay.children.length === 0) {
+    showDeathText()
   }
 }
