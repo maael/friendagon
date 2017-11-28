@@ -32,6 +32,10 @@ class Player {
     this.name = '?????'
     this.color = 'FFFFFF'
     this.alive = true
+    this.birthday = +(new Date())
+    this.time = 0
+    this.funeral = undefined
+    this.heartbeat = this.beat()
   }
 
   setName (name) {
@@ -56,13 +60,27 @@ class Player {
     this.update()
   }
 
+  beat () {
+    return setInterval(() => {
+      this.time = moment().diff(moment(this.birthday), 'seconds', true)
+      this.update()
+    }, 100)
+  }
+
   restart () {
+    this.die()
+    this.birthday = +(new Date())
+    this.time = 0
+    this.funeral = undefined
     this.alive = true
     this.rotation = 0
+    this.heartbeat = this.beat()
     this.update()
   }
 
   die () {
+    clearInterval(this.heartbeat)
+    this.funeral = +(new Date())
     this.alive = false
     this.update()
   }
@@ -72,7 +90,7 @@ class Player {
   }
 
   getState () {
-    return { rotation: this.rotation, socket: this.socket.id, room: this.room, name: this.name, shape: this.shape, color: this.color, alive: this.alive }
+    return { rotation: this.rotation, socket: this.socket.id, room: this.room, name: this.name, shape: this.shape, color: this.color, alive: this.alive, time: this.time }
   }
 }
 
@@ -141,7 +159,9 @@ function preload () {
     window.gameState = data
     document.querySelector('#game-state').innerHTML = `
       ${Object.keys(gameState).length} Players <br>
-      ${Object.keys(gameState).map((player) => (`<span style='color: #${gameState[player].color}'>(${gameState[player].shape || '?????'}) ${gameState[player].name}`)).join('</span><br>')}
+      ${Object.keys(gameState).map((player) => (
+        `<b style='color: #${gameState[player].alive ? gameState[player].color : '000000'}'>(${gameState[player].shape || '?????'}) ${gameState[player].name} - ${gameState[player].time}`)).join('</b><br>'
+      )}
     `
   })
   socket.on('game/update/ring', (data) => {

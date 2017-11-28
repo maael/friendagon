@@ -13,26 +13,19 @@ const randomColor = require('randomcolor')
 
 app.set('views', path.join(__dirname, 'views'))
 
-app.get('/public/js/socket.js', (req, res) => {
-  fs.readFile(path.resolve(path.join(__dirname, '..', 'node_modules', 'socket.io-client', 'dist', 'socket.io.js')), (err, data) => {
-    if (err) return res.status(500).send(err)
-    res.send(data)
-  })
-})
+nodeResource('/public/js/socket.js', path.join(__dirname, '..', 'node_modules', 'socket.io-client', 'dist', 'socket.io.js'))
+nodeResource('/public/js/randomColor.js', path.join(__dirname, '..', 'node_modules', 'randomcolor', 'randomColor.js'))
+nodeResource('/public/js/phaser.js', path.join(__dirname, '..', 'node_modules', 'phaser', 'build', 'phaser.js'))
+nodeResource('/public/js/moment.min.js', path.join(__dirname, '..', 'node_modules', 'moment', 'min', 'moment.min.js'))
 
-app.get('/public/js/randomColor.js', (req, res) => {
-  fs.readFile(path.resolve(path.join(__dirname, '..', 'node_modules', 'randomcolor', 'randomColor.js')), (err, data) => {
-    if (err) return res.status(500).send(err)
-    res.send(data)
+function nodeResource (u, p) {
+  app.get(u, (req, res) => {
+    fs.readFile(path.resolve(p), (err, data) => {
+      if (err) return res.status(500).send(err)
+      res.send(data)
+    })
   })
-})
-
-app.get('/public/js/phaser.js', (req, res) => {
-  fs.readFile(path.resolve(path.join(__dirname, '..', 'node_modules', 'phaser', 'build', 'phaser.js')), (err, data) => {
-    if (err) return res.status(500).send(err)
-    res.send(data)
-  })
-})
+}
 
 app.use('/public', express.static('public'))
 
@@ -72,9 +65,8 @@ io.sockets.on('connection', (socket) => {
   })
 
   socket.on('game/player/update', (data) => {
-    gameStates[data.room][data.socket] = Object.assign(gameStates[data.room][data.socket] || {}, { name: data.name, rotation: data.rotation, shape: data.shape, color: data.color, alive: data.alive })
+    gameStates[data.room][data.socket] = Object.assign(gameStates[data.room][data.socket] || {}, { name: data.name, rotation: data.rotation, shape: data.shape, color: data.color, alive: data.alive, time: data.time })
     io.to(data.room).emit('game/update', gameStates[data.room])
-    console.log(gameStates[data.room][data.socket])
   })
 
   socket.on('disconnect', (a, b, c, d) => {
