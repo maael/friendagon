@@ -1,9 +1,12 @@
 const path = require('path')
 const fs = require('fs')
+const dotenv = require('dotenv')
 const express = require('express')
 const app = express()
 const server = require('http').Server(app)
 const io = require('socket.io')(server)
+
+dotenv.load()
 
 const sillyname = require('sillyname')
 const randomColor = require('randomcolor')
@@ -41,7 +44,7 @@ app.get('/room/:room', (req, res) => {
   res.sendFile(path.join(app.settings.views, 'room.html'))
 })
 
-server.listen(3000)
+server.listen(process.env.PORT || 3000)
 
 let gameStates = {}
 let games = {}
