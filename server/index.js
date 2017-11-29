@@ -58,15 +58,27 @@ io.sockets.on('connection', (socket) => {
     const connected = Object.keys(io.sockets.adapter.rooms[data.room].sockets)
     socket.emit('player/name', { name: sillyname(), shape: shapes[0], color: randomColor({ luminosity: 'light' }).replace('#', ''), alive: true })
     io.to(data.room).emit('room/change', { room: data.room, connected })
-    if (!games[room]) {
-      console.log('new room', room)
-      games[room] = startGame(io, data)
-    }
   })
 
   socket.on('game/player/update', (data) => {
-    gameStates[data.room][data.socket] = Object.assign(gameStates[data.room][data.socket] || {}, { name: data.name, rotation: data.rotation, shape: data.shape, color: data.color, alive: data.alive, time: data.time })
+    gameStates[data.room][data.socket] = Object.assign(gameStates[data.room][data.socket] || {}, {
+      name: data.name,
+      rotation: data.rotation,
+      shape: data.shape,
+      color: data.color,
+      alive: data.alive,
+      time: data.time,
+      ready: data.ready
+    })
     io.to(data.room).emit('game/update', gameStates[data.room])
+    const allReady = Object.keys(gameStates[data.room]).every((s) => gameStates[data.room][s].ready)
+    const allDead = Object.keys(gameStates[data.room]).every((s) => !gameStates[data.room][s].alive)
+    if (allReady && !allDead && !games[room]) {
+      games[room] = startGame(io, data)
+    } else if (allDead) {
+      clearInterval(games[room])
+      delete games[room]
+    }
   })
 
   socket.on('disconnect', (a, b, c, d) => {

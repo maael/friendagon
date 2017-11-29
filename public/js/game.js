@@ -9,7 +9,8 @@ const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUT
 const controls = {
   left: {},
   right: {},
-  restart: {}
+  restart: {},
+  ready: {}
 }
 
 window.onload = () => {
@@ -45,11 +46,18 @@ class Player {
     this.name = '?????'
     this.color = 'FFFFFF'
     this.alive = true
-    this.birthday = +(new Date())
+    this.birthday = undefined
     this.time = 0
     this.funeral = undefined
     this.heartbeat = this.beat()
     this.temporary = { special: {} }
+    this.ready = false
+  }
+
+  setReady () {
+    this.ready = true
+    this.birthday = +(new Date())
+    this.update()
   }
 
   setName (name) {
@@ -96,6 +104,7 @@ class Player {
     clearInterval(this.heartbeat)
     this.funeral = +(new Date())
     this.alive = false
+    this.ready = false
     this.update()
   }
 
@@ -104,7 +113,17 @@ class Player {
   }
 
   getState () {
-    return { rotation: this.rotation, socket: this.socket.id, room: this.room, name: this.name, shape: this.shape, color: this.color, alive: this.alive, time: this.time }
+    return {
+      rotation: this.rotation,
+      socket: this.socket.id,
+      room: this.room,
+      name: this.name,
+      shape: this.shape,
+      color: this.color,
+      alive: this.alive,
+      time: this.time,
+      ready: this.ready
+    }
   }
 }
 
@@ -115,27 +134,47 @@ WebFontConfig = {
 }
 
 function showDeathText () {
-    const deathIndex = Math.floor(Math.random() * deathMessages.length)
-    const text = game.add.text(game.world.centerX, game.world.centerY, `- You're dead -\n${deathMessages[deathIndex]}`)
-    text.anchor.setTo(0.5)
-    text.font = 'Revalia'
-    text.fontSize = 60
-    text.fill = `#${animationState.background.tint}`
-    text.align = 'center'
-    text.stroke = '#000000'
-    text.strokeThickness = 2
-    text.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5)
-    const resetText = game.add.text(game.world.centerX, game.world.centerY + 200, 'Press r to restart')
-    resetText.anchor.setTo(0.5)
-    resetText.font = 'Revalia'
-    resetText.fontSize = 20
-    resetText.fill = `#${animationState.background.tint}`
-    resetText.align = 'center'
-    resetText.stroke = '#000000'
-    resetText.strokeThickness = 2
-    resetText.setShadow(5, 5, 'rgba(0,0,0,0.5)', 5)
-    animationState.groups.deathOverlay.add(text)
-    animationState.groups.deathOverlay.add(resetText)
+  const deathIndex = Math.floor(Math.random() * deathMessages.length)
+  const deathText = showText(`- You're dead -\n${deathMessages[deathIndex]}`, {
+    fontSize: 60
+  })
+  const resetText = showText('Press r to revive', {
+    y: game.world.centerY + 200
+  })
+  animationState.groups.deathOverlay.add(deathText)
+  animationState.groups.deathOverlay.add(resetText)
+}
+
+function showReadyText () {
+  const readyText = showText('Press space to ready up\nThe game will start\nas soon as everyone is ready', {
+    y: game.world.centerY + 250
+  })
+  animationState.groups.readyOverlay.add(readyText)
+}
+
+function showText (textBody, options) {
+  options = Object.assign({
+    x: game.world.centerX,
+    y: game.world.centerY,
+    anchor: 0.5,
+    font: 'Revalia',
+    fontSize: 20,
+    align: 'center',
+    tint: animationState.background.tint,
+    stroke: '#000000',
+    strokeThickness: 2,
+    shadow: [ 5, 5, 'rgba(0,0,0,0.5)', 5 ]
+  }, options)
+  const text = game.add.text(options.x, options.y, textBody)
+  text.anchor.setTo(options.anchor)
+  text.font = options.font
+  text.fontSize = options.fontSize
+  text.align = options.align
+  if (options.tint) text.fill = `#${options.tint}`
+  if (options.stroke) text.stroke = options.stroke
+  if (options.strokeThickness) text.strokeThickness = options.strokeThickness
+  if (options.shadow) text.setShadow.apply(text, options.shadow)
+  return text
 }
 
 let socket, player;
@@ -150,7 +189,8 @@ let animationState = {
     rings: undefined,
     background: undefined,
     emitter: undefined,
-    deathOverlay: undefined
+    deathOverlay: undefined,
+    readyOverlay: undefined
   },
   music: undefined
 }
@@ -174,7 +214,7 @@ function preload () {
     document.querySelector('#game-state').innerHTML = `
       ${Object.keys(gameState).length} Players <br>
       ${Object.keys(gameState).map((player) => (
-        `<b style='color: #${gameState[player].alive ? gameState[player].color : '000000'}'>(${gameState[player].shape || '?????'}) ${gameState[player].name} - ${gameState[player].time}`)).join('</b><br>'
+        `<b style='color: #${gameState[player].alive ? gameState[player].color : '000000'}'>(${gameState[player].ready ? 'Ready' : 'Not ready'}) ${gameState[player].name} - ${gameState[player].time}`)).join('</b><br>'
       )}
     `
   })
@@ -206,6 +246,7 @@ function create() {
   controls.left = game.input.keyboard.addKey(Phaser.Keyboard.LEFT)
   controls.right = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT)
   controls.restart = game.input.keyboard.addKey(Phaser.Keyboard.R)
+  controls.ready = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
   game.world.pivot = new Phaser.Point((0, 0))
   game.world.rotation = 0
   Object.keys(animationState.groups).forEach((group) => {
@@ -229,6 +270,9 @@ function update () {
     player.restart()
     animationState.groups.emitter.removeAll()
     animationState.groups.deathOverlay.removeAll()
+  }
+  if (controls.ready.isDown) {
+    player.setReady()
   }
 
   Object.keys(window.gameState || {}).forEach((playerId) => {
@@ -292,6 +336,7 @@ function update () {
   game.world.bringToTop(animationState.groups.top)
   game.world.bringToTop(animationState.groups.emitter)
   game.world.bringToTop(animationState.groups.deathOverlay)
+  game.world.bringToTop(animationState.groups.readyOverlay)
 
   if (animationState.player) {
     animationState.rings.forEach((ring) => {
@@ -303,6 +348,14 @@ function update () {
         }
       })
     })
+
+    if (!player.ready && player.alive) {
+      if (animationState.groups.readyOverlay.children.length === 0) showReadyText()
+    } else {
+      if (animationState.groups.readyOverlay.children.length !== 0) {
+        animationState.groups.readyOverlay.removeAll()
+      }
+    }
   }
 }
 
