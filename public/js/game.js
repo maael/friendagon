@@ -152,6 +152,13 @@ function showReadyText () {
   animationState.groups.readyOverlay.add(readyText)
 }
 
+function showNewRoundText () {
+  const newRoundText = showText('The round is starting!', {
+    fontSize: 60
+  })
+  animationState.groups.newRoundOverlay.add(newRoundText)
+}
+
 function showText (textBody, options) {
   options = Object.assign({
     x: game.world.centerX,
@@ -190,7 +197,8 @@ let animationState = {
     background: undefined,
     emitter: undefined,
     deathOverlay: undefined,
-    readyOverlay: undefined
+    readyOverlay: undefined,
+    newRoundOverlay: undefined
   },
   music: undefined
 }
@@ -217,6 +225,13 @@ function preload () {
         `<b style='color: #${gameState[player].alive ? gameState[player].color : '000000'}'>(${gameState[player].ready ? 'Ready' : 'Not ready'}) ${gameState[player].name} - ${gameState[player].time}`)).join('</b><br>'
       )}
     `
+    if (animationState.groups.newRoundOverlay) {
+      if (Object.keys(gameState).every((p) => gameState[p].ready) && animationState.groups.rings.children.length === 0) {
+        showNewRoundText()
+      } else {
+        animationState.groups.newRoundOverlay.removeAll()
+      }
+    }
   })
   socket.on('game/update/ring', (data) => {
     const ring = createRing(data.ring)
@@ -337,6 +352,7 @@ function update () {
   game.world.bringToTop(animationState.groups.emitter)
   game.world.bringToTop(animationState.groups.deathOverlay)
   game.world.bringToTop(animationState.groups.readyOverlay)
+  game.world.bringToTop(animationState.groups.newRoundOverlay)
 
   if (animationState.player) {
     animationState.rings.forEach((ring) => {
