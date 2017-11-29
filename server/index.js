@@ -97,12 +97,15 @@ io.sockets.on('connection', (socket) => {
 
 function startGame (io, data) {
   const presets = [
-    [ 0, 1, 2, 3, 4 ],
-    [ 0, 1, 2, 3, 5 ],
-    [ 0, 1, 2, 4, 5 ],
-    [ 0, 1, 3, 4, 5 ],
-    [ 0, 2, 3, 4, 5 ],
-    [ 1, 2, 3, 4, 5 ]
+    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 } ],
+    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 5, offset: 0 } ],
+    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
+    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
+    [ { i: 0, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
+    [ { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
+
+    [ { i: 0, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: -175 }, { i: 3, offset: 175 }, { i: 4, offset: -175 }, { i: 5, offset: 175 } ],
+    [ { i: 0, offset: 175 }, { i: 1, offset: -175 }, { i: 2, offset: 175 }, { i: 3, offset: -175 }, { i: 4, offset: 175 }, { i: 5, offset: -175 } ]
   ]
   return setInterval(() => {
     const selected = Math.floor(Math.random() * presets.length)

@@ -256,7 +256,7 @@ function preload () {
   game.animations = new Animations(game)
 }
 
-function create() {
+function create () {
   game.stage.backgroundColor = '#333333'
   controls.left = game.input.keyboard.addKey(Phaser.Keyboard.LEFT)
   controls.right = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT)
@@ -333,7 +333,7 @@ function update () {
     ring.graphic.destroy()
     ring.state.distance = ring.state.distance - 10 > 0 ? ring.state.distance - 10 : 0
     if (ring.state.distance !== 0) {
-      const polyData = batchPolys(ring.state.indexes, ring.state.color, ring.state.width, ring.state.distance)
+      const polyData = batchPolys(ring.state.layout, ring.state.color, ring.state.width, ring.state.distance)
       ring.graphic = polyData.graphic
       ring.polys = polyData.polys
       animationState.groups.rings.add(ring.graphic)
@@ -419,8 +419,8 @@ function createBackground () {
 
 function createRing (data) {
   const width = 20 + Math.floor(Math.random() * 100)
-  const state = { distance: 800, indexes: data, color: 0x444444, width }
-  const polyData = batchPolys(state.indexes, state.color, state.width, state.distance)
+  const state = { distance: 800, layout: data, color: 0x444444, width }
+  const polyData = batchPolys(state.layout, state.color, state.width, state.distance)
   const ring = { state, graphic: polyData.graphic, polys: polyData.polys }
   animationState.rings.push(ring)
   return ring
@@ -480,12 +480,12 @@ function createPolyPart (i, color, width, distance) {
   return graphics
 }
 
-function batchPolys (indexes, color, width, distance) {
+function batchPolys (layout, color, width, distance) {
   const graphics = game.add.graphics(0, 0)
   const polys = []
   graphics.beginFill(color)
-  indexes.forEach((i) => {
-    const ppoints = createPolyPartPoints(i, width, distance)
+  layout.forEach((ring) => {
+    const ppoints = createPolyPartPoints(ring.i, width, distance + ring.offset)
     const poly = new Phaser.Polygon(ppoints)
     polys.push(poly)
     graphics.drawPolygon(poly.points)
