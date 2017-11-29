@@ -107,10 +107,28 @@ function startGame (io, data) {
     [ { i: 0, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: -175 }, { i: 3, offset: 175 }, { i: 4, offset: -175 }, { i: 5, offset: 175 } ],
     [ { i: 0, offset: 175 }, { i: 1, offset: -175 }, { i: 2, offset: 175 }, { i: 3, offset: -175 }, { i: 4, offset: 175 }, { i: 5, offset: -175 } ]
   ]
+  const powerups = [
+    'speedup',
+    'audio',
+    'limit',
+    'multiplier',
+    'epileptic',
+    'swap',
+    'steal',
+    'invert'
+  ]
   return setInterval(() => {
     const selected = Math.floor(Math.random() * presets.length)
     io.to(data.room).emit('game/update/ring', {
       ring: presets[selected]
     })
+    const sendPowerup = Math.floor(Math.random() * 10)
+    if (sendPowerup === 7) {
+      const selectedPow = Math.floor(Math.random() * powerups.length)
+      io.to(data.room).emit('game/update/powerup', {
+        powerup: powerups[selectedPow],
+        rotation: Math.floor(Math.random() * 360)
+      })
+    }
   }, 1300)
 }

@@ -191,14 +191,16 @@ let animationState = {
   background: { tint: randomColor({ luminosity: 'bright' }).replace('#', '') },
   rings: [],
   groups: {
-    top: undefined,
-    players: undefined,
-    rings: undefined,
     background: undefined,
+    rings: undefined,
+    players: undefined,
+    player: undefined,
+    powerups: undefined,
     emitter: undefined,
     deathOverlay: undefined,
     readyOverlay: undefined,
-    newRoundOverlay: undefined
+    newRoundOverlay: undefined,
+    hud: undefined
   },
   music: undefined
 }
@@ -236,6 +238,13 @@ function preload () {
   socket.on('game/update/ring', (data) => {
     const ring = createRing(data.ring)
     animationState.groups.rings.add(ring.graphic)
+  })
+  socket.on('game/update/powerup', (data) => {
+    const powerup = createSprite('ff00ff', { offset: 0, special: { sprite: 'nug' } })
+    powerup.pivot.x = gameSettings.radius
+    powerup.anchor.set(0.5)
+    powerup.rotation = data.rotation * Math.PI / 180
+    animationState.groups.powerups.add(powerup)
   })
 
   document.querySelector('#submit-name').onclick = (e) => {
@@ -314,7 +323,7 @@ function update () {
           if (!player.temporary.special.sprite) animationState.player.tint = `0x${player.color}`
           animationState.player.pivot.x = gameSettings.radius
           animationState.player.anchor.set(0.5)
-          animationState.groups.top.add(animationState.player)
+          animationState.groups.player.add(animationState.player)
         } else {
           if (!player.temporary.special.sprite) animationState.player.tint = `0x${player.color}`
           animationState.player.rotation = player.rotation * Math.PI / 180
@@ -345,14 +354,9 @@ function update () {
     return rings
   }, [].concat(animationState.rings))
 
-  game.world.bringToTop(animationState.groups.background)
-  game.world.bringToTop(animationState.groups.rings)
-  game.world.bringToTop(animationState.groups.players)
-  game.world.bringToTop(animationState.groups.top)
-  game.world.bringToTop(animationState.groups.emitter)
-  game.world.bringToTop(animationState.groups.deathOverlay)
-  game.world.bringToTop(animationState.groups.readyOverlay)
-  game.world.bringToTop(animationState.groups.newRoundOverlay)
+  Object.keys(animationState.groups).forEach((group) => {
+    game.world.bringToTop(animationState.groups[group])
+  })
 
   if (animationState.player) {
     animationState.rings.forEach((ring) => {
