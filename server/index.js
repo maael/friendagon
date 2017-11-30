@@ -81,6 +81,10 @@ io.sockets.on('connection', (socket) => {
     }
   })
 
+  socket.on('game/player/powerup', (data) => {
+    console.log('applying', data, 'to all but', socket.id)
+  })
+
   socket.on('disconnect', (a, b, c, d) => {
     if (room) {
       delete gameStates[room][socket.id]
@@ -122,8 +126,8 @@ function startGame (io, data) {
     io.to(data.room).emit('game/update/ring', {
       ring: presets[selected]
     })
-    const sendPowerup = Math.floor(Math.random() * 10)
-    if (sendPowerup === 7) {
+    const sendPowerup = Math.floor(Math.random() * 100)
+    if (sendPowerup > 85) {
       const selectedPow = Math.floor(Math.random() * powerups.length)
       io.to(data.room).emit('game/update/powerup', {
         powerup: powerups[selectedPow],

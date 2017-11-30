@@ -1,11 +1,13 @@
 const gameSettings = {
   height: 1000,
   width: 1000,
-  radius: 100
+  radius: 100,
+  ringSpeed: 10,
+  powerupSpeed: 1.5
 }
 
 const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUTO, '', { preload, create, update, render })
-
+window.game = game
 const controls = {
   left: {},
   right: {},
@@ -204,6 +206,7 @@ let animationState = {
   },
   music: undefined
 }
+window.animationState = animationState
 
 function preload () {
   socket = io.connect()
@@ -241,8 +244,8 @@ function preload () {
   })
   socket.on('game/update/powerup', (data) => {
     const powerup = createSprite('ff00ff', { offset: 0, special: { sprite: 'nug' } })
-    powerup.pivot.x = gameSettings.radius
-    powerup.anchor.set(0.5)
+    powerup.anchor.set(0.5, 0.5)
+    powerup.pivot.x = game.world.width * 2
     powerup.rotation = data.rotation * Math.PI / 180
     animationState.groups.powerups.add(powerup)
   })
@@ -277,6 +280,7 @@ function create () {
     animationState.groups[group] = game.add.group()
   })
   animationState.music = game.add.audio('black_kitty')
+  animationState.music.volume = 0.5
   game.sound.setDecodedCallback([ animationState.music ], () => {
     animationState.music.loopFull(1)
   }, this)
@@ -340,19 +344,28 @@ function update () {
   })
   animationState.rings = animationState.rings.reduce((rings, ring, i) => {
     ring.graphic.destroy()
-    ring.state.distance = ring.state.distance - 10 > 0 ? ring.state.distance - 10 : 0
-    if (ring.state.distance !== 0) {
+    const largestOffset = ring.state.layout.reduce((max, poly) => Math.max(max, poly.offset), 0)
+    ring.state.distance = (ring.state.distance - gameSettings.ringSpeed) + largestOffset > 0 ? ring.state.distance - gameSettings.ringSpeed : 0
+    if ((ring.state.distance + largestOffset) > gameSettings.ringSpeed) {
       const polyData = batchPolys(ring.state.layout, ring.state.color, ring.state.width, ring.state.distance)
       ring.graphic = polyData.graphic
       ring.polys = polyData.polys
       animationState.groups.rings.add(ring.graphic)
     }
-    if (ring.state.distance === 0) {
+    if ((ring.state.distance + largestOffset) <= gameSettings.ringSpeed) {
       rings.splice(i, 1)
       return rings
     }
     return rings
   }, [].concat(animationState.rings))
+
+  animationState.groups.powerups.children.forEach((powerup) => {
+    powerup.pivot.x = powerup.pivot.x - (gameSettings.ringSpeed * gameSettings.powerupSpeed)
+    if (powerup.pivot.x <= 0) {
+      powerup.destroy()
+      animationState.groups.powerups.remove(powerup)
+    }
+  })
 
   Object.keys(animationState.groups).forEach((group) => {
     game.world.bringToTop(animationState.groups[group])
@@ -367,6 +380,14 @@ function update () {
           player.die()
         }
       })
+    })
+
+    animationState.groups.powerups.children.forEach((powerup) => {
+      if (powerup.getBounds().contains(animationState.player.worldPosition.x, animationState.player.worldPosition.y)) {
+        socket.emit('game/player/powerup', { powerup: powerup.key })
+        powerup.destroy()
+        animationState.groups.powerups.remove(powerup)
+      }
     })
 
     if (!player.ready && player.alive) {
@@ -489,10 +510,12 @@ function batchPolys (layout, color, width, distance) {
   const polys = []
   graphics.beginFill(color)
   layout.forEach((ring) => {
-    const ppoints = createPolyPartPoints(ring.i, width, distance + ring.offset)
-    const poly = new Phaser.Polygon(ppoints)
-    polys.push(poly)
-    graphics.drawPolygon(poly.points)
+    if (distance + ring.offset >= 0) {
+      const ppoints = createPolyPartPoints(ring.i, width, distance + ring.offset)
+      const poly = new Phaser.Polygon(ppoints)
+      polys.push(poly)
+      graphics.drawPolygon(poly.points)
+    }
   })
   graphics.tint = `0x${animationState.background.tint}`
   graphics.endFill()
