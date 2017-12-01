@@ -99,18 +99,29 @@ io.sockets.on('connection', (socket) => {
   })
 })
 
-function startGame (io, data) {
-  const presets = [
-    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 } ],
-    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 5, offset: 0 } ],
-    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
-    [ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
-    [ { i: 0, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
-    [ { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ],
+function getRotations(base, adjustments) {
+  return [ base ].concat(adjustments.map((i) => (
+    [].concat(base).map((edge) => (
+      Object.assign({}, edge, { i: (edge.i + i) % 6 })
+    ))
+  )))
+}
 
-    [ { i: 0, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: -175 }, { i: 3, offset: 175 }, { i: 4, offset: -175 }, { i: 5, offset: 175 } ],
-    [ { i: 0, offset: 175 }, { i: 1, offset: -175 }, { i: 2, offset: 175 }, { i: 3, offset: -175 }, { i: 4, offset: 175 }, { i: 5, offset: -175 } ]
-  ]
+function startGame (io, data) {
+  const presets = getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ])
+    .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: -175 }, { i: 3, offset: 175 }, { i: 4, offset: -175 }, { i: 5, offset: 175 } ], [1]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 4, offset: 0 }, { i: 5, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 3, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 2, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: 0 }, { i: 3, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: -175 }, { i: 3, offset: -175 }, { i: 4, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: 175 }, { i: 4, offset: 175 }, { i: 5, offset: 175 } ], [ 1, 2, 3, 4, 5 ]))
+
   const powerups = [
     'speedup',
     'audio',
