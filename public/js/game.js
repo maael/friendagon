@@ -86,7 +86,8 @@ class Player {
 
   beat () {
     return setInterval(() => {
-      this.time = moment().diff(moment(this.birthday), 'seconds', true)
+      const newTime = moment().diff(moment(this.birthday), 'seconds', true)
+      this.time = newTime > 0 ? newTime : 0
       this.update()
     }, 100)
   }
@@ -154,6 +155,19 @@ function showReadyText () {
   animationState.groups.readyOverlay.add(readyText)
 }
 
+function showPlayerTimer () {
+  const fixedLength = (player.time.toString().split('.')[1] || '').length
+  const timerText = showText(`${(player.time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, {
+    y: 75,
+    fontSize: 30
+  })
+  const nameText = showText(player.name, {
+    y: 35,
+    fontSize: 25
+  })
+  animationState.groups.hud.add(timerText)
+}
+
 function showNewRoundText () {
   const newRoundText = showText('The round is starting!', {
     fontSize: 60
@@ -202,7 +216,8 @@ let animationState = {
     deathOverlay: undefined,
     readyOverlay: undefined,
     newRoundOverlay: undefined,
-    hud: undefined
+    hud: undefined,
+    settings: undefined
   },
   music: undefined
 }
@@ -397,6 +412,9 @@ function update () {
         animationState.groups.readyOverlay.removeAll()
       }
     }
+
+    animationState.groups.hud.removeAll();
+    showPlayerTimer()
   }
 }
 
