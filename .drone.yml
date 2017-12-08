@@ -1,0 +1,21 @@
+pipeline:
+  build:
+    image: node:9.2
+    commands:
+      - npm install
+  publish:
+    app: hex.maelphick.com
+    when:
+      branch: master
+    image: appleboy/drone-ssh
+    host: maelphick.com
+    username: mael
+    port: 22
+    secrets: [ ssh_password  ]
+    scripts:
+      - cd sites/friendagon/
+      - echo "Pulling latest changes"
+      - git pull
+      - echo "Running npm install"
+      - npm i
+      - echo "Finished"
