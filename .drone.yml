@@ -12,7 +12,7 @@ pipeline:
     username: mael
     port: 22
     secrets: [ ssh_password  ]
-    scripts:
+    script:
       - cd sites/friendagon/
       - echo "Pulling latest changes"
       - git pull
