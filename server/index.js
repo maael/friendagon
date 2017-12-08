@@ -49,7 +49,7 @@ app.get('/api/rooms', (req, res) => {
 const shapes = [ 'triangle', 'square', 'circle', 'hexagon', 'diamond', 'asterisk' ]
 
 io.sockets.on('connection', (socket) => {
-  let room = undefined
+  let room
   socket.on('room/join', (data) => {
     socket.join(data.room)
     room = data.room
@@ -99,7 +99,7 @@ io.sockets.on('connection', (socket) => {
   })
 })
 
-function getRotations(base, adjustments) {
+function getRotations (base, adjustments) {
   return [ base ].concat(adjustments.map((i) => (
     [].concat(base).map((edge) => (
       Object.assign({}, edge, { i: (edge.i + i) % 6 })
@@ -121,7 +121,7 @@ function startGame (io, data) {
     .concat(getRotations([ { i: 0, offset: 0 }, { i: 2, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
     .concat(getRotations([ { i: 0, offset: 0 }, { i: 3, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
     .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: -175 }, { i: 3, offset: -175 }, { i: 4, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: 175 }, { i: 4, offset: 175 }, { i: 5, offset: 175 } ], [ 1, 2, 3, 4, 5 ]))
-    .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: -175 }, { i: 3, offset: -175 }, { i: 4, offset: -175 }, { i: 2, offset: 175 }, { i: 3, offset: 175 }, { i: 5, offset: 175 }, { i: 0  , offset: 175 } ], [ 1, 2, 3, 4, 5 ]))
+    .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: -175 }, { i: 3, offset: -175 }, { i: 4, offset: -175 }, { i: 2, offset: 175 }, { i: 3, offset: 175 }, { i: 5, offset: 175 }, { i: 0, offset: 175 } ], [ 1, 2, 3, 4, 5 ]))
     .concat(getRotations([ { i: 0, offset: 200 }, { i: 1, offset: 150 }, { i: 2, offset: 100 }, { i: 3, offset: 50 }, { i: 4, offset: 0 }, { i: 5, offset: -50 }], [ 1, 2, 3, 4, 5 ]))
     .concat(getRotations([ { i: 0, offset: 200 }, { i: 1, offset: 150 }, { i: 2, offset: 100 }, { i: 3, offset: 50 }, { i: 4, offset: 0 }, { i: 5, offset: -50 }, { i: 0, offset: -100 }, { i: 1, offset: -150 }, { i: 2, offset: -200 }, { i: 3, offset: -250 }], [ 1, 2, 3, 4, 5 ]))
     .concat(getRotations([ { i: 5, offset: 200 }, { i: 4, offset: 150 }, { i: 3, offset: 100 }, { i: 2, offset: 50 }, { i: 1, offset: 0 }, { i: 0, offset: -50 }], [ 1, 2, 3, 4, 5 ]))

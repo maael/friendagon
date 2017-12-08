@@ -131,9 +131,9 @@ class Player {
 }
 
 WebFontConfig = {
-    google: {
-      families: ['Revalia']
-    }
+  google: {
+    families: ['Revalia']
+  }
 }
 
 function showDeathText () {
@@ -200,7 +200,7 @@ function showText (textBody, options) {
   return text
 }
 
-let socket, player;
+let socket, player
 
 let animationState = {
   players: {},
@@ -413,7 +413,7 @@ function update () {
       }
     }
 
-    animationState.groups.hud.removeAll();
+    animationState.groups.hud.removeAll()
     showPlayerTimer()
   }
 }
@@ -556,25 +556,24 @@ function death () {
 }
 
 class Animations {
-  constructor(game) {
-    this.game = game;
+  constructor (game) {
+    this.game = game
   }
 
-  tweenTint(obj, startColor, endColor, time = 250, callback = null) {
+  tweenTint (obj, startColor, endColor, time = 250, callback = null) {
     if (obj) {
-      let colorBlend = { step: 0 };
-      let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, time);
+      let colorBlend = { step: 0 }
+      let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, time)
       colorTween.onUpdateCallback(() => {
-        obj.tint = Phaser.Color.interpolateColor(startColor, endColor, 100, colorBlend.step);
-      });
-      obj.tint = startColor;
+        obj.tint = Phaser.Color.interpolateColor(startColor, endColor, 100, colorBlend.step)
+      })
+      obj.tint = startColor
       if (callback) {
         colorTween.onComplete.add(() => {
-          callback();
-        });
+          callback()
+        })
       }
-      colorTween.start();
+      colorTween.start()
     }
   }
 }
-
