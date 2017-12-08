@@ -12,8 +12,9 @@ pipeline:
     username: mael
     port: 22
     secrets: [ ssh_password  ]
-    scripts:
+    script:
       - cd sites/friendagon/
+      - git config -l
       - echo "Pulling latest changes"
       - git pull
       - echo "Running npm install"
