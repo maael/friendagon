@@ -108,6 +108,7 @@ function getRotations (base, adjustments) {
 }
 
 function startGame (io, data) {
+  console.log('GAME STARTED')
   const presets = getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ])
     .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: -175 }, { i: 3, offset: 175 }, { i: 4, offset: -175 }, { i: 5, offset: 175 } ], [1]))
     .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))
