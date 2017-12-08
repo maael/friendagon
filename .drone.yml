@@ -18,4 +18,6 @@ pipeline:
       - git pull
       - echo "Running npm install"
       - npm i
+      - echo "Restarting service"
+      - sudo systemctl restart friendagon
       - echo "Finished"
