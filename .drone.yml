@@ -13,7 +13,7 @@ pipeline:
     port: 22
     secrets: [ ssh_password  ]
     script:
-      - tmux attach -t friendagon
+      - cd sites/friendagon
       - echo "Pulling latest changes"
       - git pull
       - echo "Running npm install"
