@@ -12,8 +12,8 @@ pipeline:
     username: mael
     port: 22
     secrets: [ ssh_password  ]
-    scripts:
-      - cd sites/friendagon/
+    script:
+      - tmux attach -t friendagon
       - echo "Pulling latest changes"
       - git pull
       - echo "Running npm install"
