@@ -59,3 +59,6 @@ typings/
 
 # mac things
 .DS_STORE
+
+# generated bundles
+public/js/bundle.js
