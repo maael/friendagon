@@ -10,6 +10,7 @@ controls.add('left')
 controls.add('right')
 controls.add('restart')
 controls.add('ready')
+controls.add('settings')
 
 let text, showText, socket, player, gameStart
 
@@ -114,6 +115,8 @@ function preload () {
 
   require('./util/load/assets')(game)
   game.animations = new Animations(game)
+  animationState.ui = game.plugins.add(Phaser.Plugin.SlickUI)
+  animationState.ui.load('/public/js/kenney-theme/kenney.json')
 }
 
 function create () {
@@ -124,17 +127,39 @@ function create () {
   controls.setup('right', game.input.keyboard.addKey(Phaser.Keyboard.RIGHT))
   controls.setup('restart', game.input.keyboard.addKey(Phaser.Keyboard.R))
   controls.setup('ready', game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR))
+  controls.setup('settings', game.input.keyboard.addKey(Phaser.Keyboard.S))
   game.world.pivot = new Phaser.Point((0, 0))
   game.world.rotation = 0
   Object.keys(animationState.groups).forEach((group) => {
     animationState.groups[group] = game.add.group()
   })
   animationState.music = game.add.audio('black_kitty')
-  animationState.music.volume = 0.5
   game.sound.setDecodedCallback([ animationState.music ], () => {
     animationState.music.loopFull(1)
+    animationState.music.volume = 0.1
   }, this)
   createBackground()
+}
+
+function renderSettings () {
+  const panel = new SlickUI.Element.Panel(200, 200, game.width - 400, game.height - 800)
+  animationState.ui.add(panel)
+  const slider = new SlickUI.Element.Slider(16,100, panel.width - 32)
+  const button = new SlickUI.Element.Button((panel.width / 2 - 50), 130, 100, 40)
+  panel.add(button)
+  button.add(new SlickUI.Element.Text(0,0, 'Save')).center()
+  button.events.onInputUp.add(() => {
+    animationState.ui.container.remove(panel)
+    animationState.groups.settings && animationState.groups.settings.removeAll()
+  })
+  panel.add(slider)
+  panel.add(new SlickUI.Element.Text(10,10, 'Settings')).centerHorizontally().text.alpha = 0.75;
+  panel.add(new SlickUI.Element.Text(10,40, 'Volume')).centerHorizontally().text.alpha = 0.7;
+  slider.onDrag.add((value) => {
+    animationState.music.volume = value
+  })
+  animationState.groups.settings = animationState.ui.container.displayGroup
+  game.world.bringToTop(animationState.groups.settings)
 }
 
 function update () {
@@ -145,6 +170,10 @@ function update () {
     player.restart()
     animationState.groups.emitter.removeAll()
     animationState.groups.deathOverlay.removeAll()
+  }
+
+  if (controls.isDown('settings')) {
+    renderSettings()
   }
 
   Object.keys(window.gameState || {}).forEach((playerId) => {
