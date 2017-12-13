@@ -2,26 +2,19 @@ const gameSettings = require('./settings/game')
 const deathMessages = require('./settings/deathMessages')
 const Player = require('./classes/player')
 const Animations = require('./classes/animations')
+const controls = require('./util/controls')
 
 const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUTO, '', { preload, create, update, render })
 window.game = game
-const controls = {
-  left: {},
-  right: {},
-  restart: {},
-  ready: {}
-}
+controls.add('left')
+controls.add('right')
+controls.add('restart')
+controls.add('ready')
+
+let text, showText, socket, player
 
 window.onload = () => {
-  let word = ''
-  document.body.addEventListener('keyup', (e) => {
-    if (!e.metaKey) word += e.key
-    if (word.includes('nug') || word.includes('sket')) {
-      if (word.includes('nug')) player.temporary = { special: { sprite: 'nug' } }
-      else if (word.includes('sket')) player.temporary = { special: { sprite: 'wine' } }
-      word = ''
-    }
-  })
+  document.body.addEventListener('keyup', require('./interaction/cheatcode')(player))
 }
 
 global.WebFontConfig = {
@@ -32,29 +25,20 @@ global.WebFontConfig = {
 
 function showDeathText () {
   const deathIndex = Math.floor(Math.random() * deathMessages.length)
-  const deathText = showText(`- You're dead -\n${deathMessages[deathIndex]}`, {
-    fontSize: 60
-  })
-  const resetText = showText('Press r to revive', {
-    y: game.world.centerY + 200
-  })
+  const deathText = showText(`- You're dead -\n${deathMessages[deathIndex]}`, text.death)
+  const resetText = showText('Press r to revive', text.reset)
   animationState.groups.deathOverlay.add(deathText)
   animationState.groups.deathOverlay.add(resetText)
 }
 
 function showReadyText () {
-  const readyText = showText('Press space to ready up\nThe game will start\nas soon as everyone is ready', {
-    y: game.world.centerY + 250
-  })
+  const readyText = showText('Press space to ready up\nThe game will start\nas soon as everyone is ready', text.ready)
   animationState.groups.readyOverlay.add(readyText)
 }
 
 function showPlayerTimer () {
   const fixedLength = (player.time.toString().split('.')[1] || '').length
-  const timerText = showText(`${(player.time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, {
-    y: 75,
-    fontSize: 30
-  })
+  const timerText = showText(`${(player.time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, text.playerTime)
   // const nameText = showText(player.name, {
   //   y: 35,
   //   fontSize: 25
@@ -63,58 +47,11 @@ function showPlayerTimer () {
 }
 
 function showNewRoundText () {
-  const newRoundText = showText('The round is starting!', {
-    fontSize: 60
-  })
+  const newRoundText = showText('The round is starting!', text.newRound)
   animationState.groups.newRoundOverlay.add(newRoundText)
 }
 
-function showText (textBody, options) {
-  options = Object.assign({
-    x: game.world.centerX,
-    y: game.world.centerY,
-    anchor: 0.5,
-    font: 'Revalia',
-    fontSize: 20,
-    align: 'center',
-    tint: animationState.background.tint,
-    stroke: '#000000',
-    strokeThickness: 2,
-    shadow: [ 5, 5, 'rgba(0,0,0,0.5)', 5 ]
-  }, options)
-  const text = game.add.text(options.x, options.y, textBody)
-  text.anchor.setTo(options.anchor)
-  text.font = options.font
-  text.fontSize = options.fontSize
-  text.align = options.align
-  if (options.tint) text.fill = `#${options.tint}`
-  if (options.stroke) text.stroke = options.stroke
-  if (options.strokeThickness) text.strokeThickness = options.strokeThickness
-  if (options.shadow) text.setShadow.apply(text, options.shadow)
-  return text
-}
-
-let socket, player
-
-let animationState = {
-  players: {},
-  background: { tint: randomColor({ luminosity: 'bright' }).replace('#', '') },
-  rings: [],
-  groups: {
-    background: undefined,
-    rings: undefined,
-    players: undefined,
-    player: undefined,
-    powerups: undefined,
-    emitter: undefined,
-    deathOverlay: undefined,
-    readyOverlay: undefined,
-    newRoundOverlay: undefined,
-    hud: undefined,
-    settings: undefined
-  },
-  music: undefined
-}
+const animationState = require('./settings/animationState')
 window.animationState = animationState
 
 function preload () {
@@ -168,21 +105,18 @@ function preload () {
     name.value = ''
   }
 
-  game.load.image('heart', '/public/imgs/heart.gif')
-  game.load.image('wine', '/public/imgs/wine.png')
-  game.load.image('nug', '/public/imgs/nug.png')
-  game.load.spritesheet('balls', '/public/imgs/balls.png', 17, 17)
-  game.load.audio('black_kitty', '/public/music/black_kitty.mp3')
-  game.load.script('webfont', '//ajax.googleapis.com/ajax/libs/webfont/1.4.7/webfont.js')
+  require('./util/load/assets')(game)
   game.animations = new Animations(game)
 }
 
 function create () {
+  text = require('./settings/text')(game)
+  showText = require('./util/render/text')(game)
   game.stage.backgroundColor = '#333333'
-  controls.left = game.input.keyboard.addKey(Phaser.Keyboard.LEFT)
-  controls.right = game.input.keyboard.addKey(Phaser.Keyboard.RIGHT)
-  controls.restart = game.input.keyboard.addKey(Phaser.Keyboard.R)
-  controls.ready = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR)
+  controls.setup('left', game.input.keyboard.addKey(Phaser.Keyboard.LEFT))
+  controls.setup('right', game.input.keyboard.addKey(Phaser.Keyboard.RIGHT))
+  controls.setup('restart', game.input.keyboard.addKey(Phaser.Keyboard.R))
+  controls.setup('ready', game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR))
   game.world.pivot = new Phaser.Point((0, 0))
   game.world.rotation = 0
   Object.keys(animationState.groups).forEach((group) => {
@@ -197,19 +131,13 @@ function create () {
 }
 
 function update () {
-  if (controls.left.isDown) {
-    player.rotate(-1)
-  }
-  if (controls.right.isDown) {
-    player.rotate(1)
-  }
-  if (controls.restart.isDown) {
+  if (controls.isDown('left')) player.rotate(-1)
+  if (controls.isDown('right')) player.rotate(1)
+  if (controls.isDown('ready')) player.setReady()
+  if (controls.isDown('restart')) {
     player.restart()
     animationState.groups.emitter.removeAll()
     animationState.groups.deathOverlay.removeAll()
-  }
-  if (controls.ready.isDown) {
-    player.setReady()
   }
 
   Object.keys(window.gameState || {}).forEach((playerId) => {
@@ -352,6 +280,17 @@ function createBackground () {
   animationState.groups.background.add(createPoly(4, 0xAAAAAA))
   animationState.groups.background.add(createPoly(5, 0xFFFFFF))
   animateBackground()
+
+  function animateBackground () {
+    setInterval(() => {
+      const newTint = randomColor({ luminosity: 'bright' }).replace('#', '')
+      animationState.groups.background.children.forEach((b) => {
+        game.animations.tweenTint(b, `0x${animationState.background.tint}`, `0x${newTint}`, 1000, () => {
+          animationState.background.tint = newTint
+        })
+      })
+    }, 10000)
+  }
 }
 
 function createRing (data) {
@@ -363,48 +302,9 @@ function createRing (data) {
   return ring
 }
 
-function hexCorner (c, s, i) {
-  const degree = 60 * i + 30
-  const rad = Math.PI / 180 * degree
-  const x = c.x + s * Math.cos(rad)
-  const y = c.y + s * Math.sin(rad)
-  return { x, y }
-}
-
-function createPoly (i, color) {
-  const next = (i + 1) % 6
-  const points = [{ x: game.world.centerX, y: game.world.centerY }]
-  points.push(hexCorner(points[0], gameSettings.width, i))
-  points.push(hexCorner(points[0], gameSettings.width, next))
-  const poly = new Phaser.Polygon(points)
-  const graphics = game.add.graphics(0, 0)
-  graphics.beginFill(color)
-  graphics.drawPolygon(poly.points)
-  graphics.endFill()
-  graphics.tint = `0x${animationState.background.tint}`
-  return graphics
-}
-
-function animateBackground () {
-  setInterval(() => {
-    const newTint = randomColor({ luminosity: 'bright' }).replace('#', '')
-    animationState.groups.background.children.forEach((b) => {
-      game.animations.tweenTint(b, `0x${animationState.background.tint}`, `0x${newTint}`, 1000, () => {
-        animationState.background.tint = newTint
-      })
-    })
-  }, 10000)
-}
-
-function createPolyPartPoints (i, width, distance) {
-  const next = (i + 1) % 6
-  const points = []
-  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance, i))
-  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance, next))
-  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance + width, next))
-  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance + width, i))
-  return points
-}
+const hexCorner = require('./util/render/geometry/hexCorner')
+const createPoly = require('./util/render/geometry/createPoly')(Phaser, game, gameSettings, animationState)
+const createPolyPartPoints = require('./util/render/geometry/createPolyPartPoints')(game)
 
 function batchPolys (layout, color, width, distance) {
   const graphics = game.add.graphics(0, 0)
