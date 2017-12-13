@@ -1,4 +1,4 @@
-module.exports = function createRenderText (game) {
+module.exports = function createRenderText (game, animationState) {
   return function renderText (textBody, options) {
     options = Object.assign({
       x: game.world.centerX,

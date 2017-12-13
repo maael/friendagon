@@ -117,7 +117,7 @@ function preload () {
 }
 
 function create () {
-  text = require('./settings/text')(game)
+  text = require('./settings/text')(game, animationState)
   showText = require('./util/render/text')(game)
   game.stage.backgroundColor = '#333333'
   controls.setup('left', game.input.keyboard.addKey(Phaser.Keyboard.LEFT))
@@ -309,7 +309,6 @@ function createRing (data) {
   return ring
 }
 
-const hexCorner = require('./util/render/geometry/hexCorner')
 const createPoly = require('./util/render/geometry/createPoly')(Phaser, game, gameSettings, animationState)
 const createPolyPartPoints = require('./util/render/geometry/createPolyPartPoints')(game)
 
