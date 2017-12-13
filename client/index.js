@@ -1,10 +1,7 @@
-const gameSettings = {
-  height: 1000,
-  width: 1000,
-  radius: 100,
-  ringSpeed: 10,
-  powerupSpeed: 1.5
-}
+const gameSettings = require('./settings/game')
+const deathMessages = require('./settings/deathMessages')
+const Player = require('./classes/player')
+const Animations = require('./classes/animations')
 
 const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUTO, '', { preload, create, update, render })
 window.game = game
@@ -25,109 +22,6 @@ window.onload = () => {
       word = ''
     }
   })
-}
-
-const deathMessages = [
-  'This is the end\nof the line!',
-  'Oh hex! You\'re dead.',
-  'You squared off\nand failed.',
-  'It\'s all come\nfull circle',
-  'Quick and to the point',
-  'Doh!(decahedron)',
-  'Don\'t get\nbent out of shape',
-  'I don\'t have\nenough shape puns'
-]
-
-class Player {
-  constructor (socket, room) {
-    this.rotation = 0
-    this.speed = 10
-    this.socket = socket
-    this.room = room
-    this.shape = undefined
-    this.name = '?????'
-    this.color = 'FFFFFF'
-    this.alive = true
-    this.birthday = undefined
-    this.time = 0
-    this.funeral = undefined
-    this.heartbeat = this.beat()
-    this.temporary = { special: {} }
-    this.ready = false
-  }
-
-  setReady () {
-    this.ready = true
-    this.birthday = +(new Date())
-    this.update()
-  }
-
-  setName (name) {
-    this.name = name.trim()
-    document.querySelector('#user-name').setAttribute('placeholder', this.name)
-    this.update()
-  }
-
-  setShape (shape) {
-    this.shape = shape
-    document.querySelector('#user-shape').value = shape
-    this.update()
-  }
-
-  setColor (color) {
-    this.color = color
-    this.update()
-  }
-
-  rotate (rotation) {
-    this.rotation = (this.rotation + (rotation * this.speed)) % 360
-    this.update()
-  }
-
-  beat () {
-    return setInterval(() => {
-      const newTime = moment().diff(moment(this.birthday), 'seconds', true)
-      this.time = newTime > 0 ? newTime : 0
-      this.update()
-    }, 100)
-  }
-
-  restart () {
-    this.die()
-    this.birthday = +(new Date())
-    this.time = 0
-    this.funeral = undefined
-    this.alive = true
-    this.rotation = 0
-    this.heartbeat = this.beat()
-    this.update()
-  }
-
-  die () {
-    clearInterval(this.heartbeat)
-    this.funeral = +(new Date())
-    this.alive = false
-    this.ready = false
-    this.update()
-  }
-
-  update () {
-    this.socket.emit('game/player/update', this.getState())
-  }
-
-  getState () {
-    return {
-      rotation: this.rotation,
-      socket: this.socket.id,
-      room: this.room,
-      name: this.name,
-      shape: this.shape,
-      color: this.color,
-      alive: this.alive,
-      time: this.time,
-      ready: this.ready
-    }
-  }
 }
 
 WebFontConfig = {
@@ -552,28 +446,5 @@ function death () {
   }
   if (animationState.groups.deathOverlay.children.length === 0) {
     showDeathText()
-  }
-}
-
-class Animations {
-  constructor (game) {
-    this.game = game
-  }
-
-  tweenTint (obj, startColor, endColor, time = 250, callback = null) {
-    if (obj) {
-      let colorBlend = { step: 0 }
-      let colorTween = this.game.add.tween(colorBlend).to({ step: 100 }, time)
-      colorTween.onUpdateCallback(() => {
-        obj.tint = Phaser.Color.interpolateColor(startColor, endColor, 100, colorBlend.step)
-      })
-      obj.tint = startColor
-      if (callback) {
-        colorTween.onComplete.add(() => {
-          callback()
-        })
-      }
-      colorTween.start()
-    }
   }
 }
