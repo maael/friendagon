@@ -118,7 +118,7 @@ function preload () {
 
 function create () {
   text = require('./settings/text')(game, animationState)
-  showText = require('./util/render/text')(game)
+  showText = require('./util/render/text')(game, animationState)
   game.stage.backgroundColor = '#333333'
   controls.setup('left', game.input.keyboard.addKey(Phaser.Keyboard.LEFT))
   controls.setup('right', game.input.keyboard.addKey(Phaser.Keyboard.RIGHT))
