@@ -144,7 +144,7 @@ function create () {
 function renderSettings () {
   const panel = new SlickUI.Element.Panel(200, 200, game.width - 400, game.height - 800)
   animationState.ui.add(panel)
-  const slider = new SlickUI.Element.Slider(16, 100, panel.width - 32)
+  const slider = new SlickUI.Element.Slider(16, 100, panel.width - 32, animationState.music.volume)
   const button = new SlickUI.Element.Button((panel.width / 2 - 50), 130, 100, 40)
   panel.add(button)
   button.add(new SlickUI.Element.Text(0, 0, 'Save')).center()
