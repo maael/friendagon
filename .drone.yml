@@ -18,6 +18,8 @@ pipeline:
       - git pull
       - echo "Running npm install"
       - npm i
+      - echo "Linting"
+      - npm run lint
       - echo "Building bundle"
       - npm run build
       - echo "Restarting service"

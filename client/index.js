@@ -24,7 +24,7 @@ window.onload = () => {
   })
 }
 
-WebFontConfig = {
+global.WebFontConfig = {
   google: {
     families: ['Revalia']
   }
@@ -55,10 +55,10 @@ function showPlayerTimer () {
     y: 75,
     fontSize: 30
   })
-  const nameText = showText(player.name, {
-    y: 35,
-    fontSize: 25
-  })
+  // const nameText = showText(player.name, {
+  //   y: 35,
+  //   fontSize: 25
+  // })
   animationState.groups.hud.add(timerText)
 }
 
@@ -134,13 +134,13 @@ function preload () {
   socket.on('game/update', (data) => {
     window.gameState = data
     document.querySelector('#game-state').innerHTML = `
-      ${Object.keys(gameState).length} Players <br>
-      ${Object.keys(gameState).map((player) => (
-        `<b style='color: #${gameState[player].alive ? gameState[player].color : '000000'}'>(${gameState[player].ready ? 'Ready' : 'Not ready'}) ${gameState[player].name} - ${gameState[player].time}`)).join('</b><br>'
+      ${Object.keys(window.gameState).length} Players <br>
+      ${Object.keys(window.gameState).map((player) => (
+        `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name} - ${window.gameState[player].time}`)).join('</b><br>'
       )}
     `
     if (animationState.groups.newRoundOverlay) {
-      if (Object.keys(gameState).every((p) => gameState[p].ready) && animationState.groups.rings.children.length === 0) {
+      if (Object.keys(window.gameState).every((p) => window.gameState[p].ready) && animationState.groups.rings.children.length === 0) {
         showNewRoundText()
       } else {
         animationState.groups.newRoundOverlay.removeAll()
@@ -363,7 +363,7 @@ function createRing (data) {
   return ring
 }
 
-function hex_corner (c, s, i) {
+function hexCorner (c, s, i) {
   const degree = 60 * i + 30
   const rad = Math.PI / 180 * degree
   const x = c.x + s * Math.cos(rad)
@@ -374,8 +374,8 @@ function hex_corner (c, s, i) {
 function createPoly (i, color) {
   const next = (i + 1) % 6
   const points = [{ x: game.world.centerX, y: game.world.centerY }]
-  points.push(hex_corner(points[0], gameSettings.width, i))
-  points.push(hex_corner(points[0], gameSettings.width, next))
+  points.push(hexCorner(points[0], gameSettings.width, i))
+  points.push(hexCorner(points[0], gameSettings.width, next))
   const poly = new Phaser.Polygon(points)
   const graphics = game.add.graphics(0, 0)
   graphics.beginFill(color)
@@ -399,22 +399,11 @@ function animateBackground () {
 function createPolyPartPoints (i, width, distance) {
   const next = (i + 1) % 6
   const points = []
-  points.push(hex_corner({ x: game.world.centerX, y: game.world.centerY }, distance, i))
-  points.push(hex_corner({ x: game.world.centerX, y: game.world.centerY }, distance, next))
-  points.push(hex_corner({ x: game.world.centerX, y: game.world.centerY }, distance + width, next))
-  points.push(hex_corner({ x: game.world.centerX, y: game.world.centerY }, distance + width, i))
+  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance, i))
+  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance, next))
+  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance + width, next))
+  points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance + width, i))
   return points
-}
-
-function createPolyPart (i, color, width, distance) {
-  const points = createPolyPartPoints(i, width, distance)
-  const poly = new Phaser.Polygon(points)
-  const graphics = game.add.graphics(0, 0)
-  graphics.beginFill(color)
-  graphics.drawPolygon(poly.points)
-  graphics.endFill()
-  if (i % 2 === 1) graphics.tint = animationState.background.tint
-  return graphics
 }
 
 function batchPolys (layout, color, width, distance) {

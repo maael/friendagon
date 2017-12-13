@@ -7,6 +7,7 @@
     "start": "node server/index.js",
     "build": "webpack",
     "watch": "npm run build -- -w",
+    "lint": "standard",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "Matthew Elphick <matt.a.elphy@gmail.com> (https://github.com/maael)",
@@ -23,8 +24,13 @@
     "socket.io": "^2.0.4"
   },
   "devDependencies": {
+    "html-webpack-plugin": "^2.30.1",
+    "preload-webpack-plugin": "^2.0.0",
     "standard": "^10.0.3",
     "uglifyjs-webpack-plugin": "^1.1.2",
     "webpack": "^3.10.0"
+  },
+  "standard": {
+    "globals": [ "Phaser", "fetch", "moment", "io", "randomColor" ]
   }
 }
