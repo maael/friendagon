@@ -138,6 +138,7 @@ function startGame (io, data) {
     'steal',
     'invert'
   ]
+  io.to(data.room).emit('game/start')
   return setInterval(() => {
     const selected = Math.floor(Math.random() * presets.length)
     io.to(data.room).emit('game/update/ring', {

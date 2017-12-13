@@ -9,9 +9,7 @@ class Player {
     this.color = 'FFFFFF'
     this.alive = true
     this.birthday = undefined
-    this.time = 0
     this.funeral = undefined
-    this.heartbeat = this.beat()
     this.temporary = { special: {} }
     this.ready = false
   }
@@ -44,27 +42,17 @@ class Player {
     this.update()
   }
 
-  beat () {
-    return setInterval(() => {
-      const newTime = moment().diff(moment(this.birthday), 'seconds', true)
-      this.time = newTime > 0 ? newTime : 0
-      this.update()
-    }, 100)
-  }
-
   restart () {
     this.die()
     this.birthday = +(new Date())
-    this.time = 0
     this.funeral = undefined
     this.alive = true
     this.rotation = 0
-    this.heartbeat = this.beat()
     this.update()
   }
 
   die () {
-    clearInterval(this.heartbeat)
+    console.log('dying')
     this.funeral = +(new Date())
     this.alive = false
     this.ready = false
@@ -84,7 +72,6 @@ class Player {
       shape: this.shape,
       color: this.color,
       alive: this.alive,
-      time: this.time,
       ready: this.ready
     }
   }

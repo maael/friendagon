@@ -11,7 +11,7 @@ controls.add('right')
 controls.add('restart')
 controls.add('ready')
 
-let text, showText, socket, player
+let text, showText, socket, player, gameStart
 
 window.onload = () => {
   document.body.addEventListener('keyup', require('./interaction/cheatcode')(player))
@@ -37,8 +37,12 @@ function showReadyText () {
 }
 
 function showPlayerTimer () {
-  const fixedLength = (player.time.toString().split('.')[1] || '').length
-  const timerText = showText(`${(player.time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, text.playerTime)
+  let time = player.funeral && player.birthday ? moment(player.funeral).diff(moment(player.birthday), 'seconds', true) : 0
+  if (gameStart) {
+    time = (player.funeral ? moment(player.funeral) : moment()).diff(moment(player.birthday), 'seconds', true)
+  }
+  const fixedLength = (time.toString().split('.')[1] || '').length
+  const timerText = showText(`${(time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, text.playerTime)
   // const nameText = showText(player.name, {
   //   y: 35,
   //   fontSize: 25
@@ -73,7 +77,7 @@ function preload () {
     document.querySelector('#game-state').innerHTML = `
       ${Object.keys(window.gameState).length} Players <br>
       ${Object.keys(window.gameState).map((player) => (
-        `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name} - ${window.gameState[player].time}`)).join('</b><br>'
+        `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name}`)).join('</b><br>'
       )}
     `
     if (animationState.groups.newRoundOverlay) {
@@ -94,6 +98,9 @@ function preload () {
     powerup.pivot.x = game.world.width * 2
     powerup.rotation = data.rotation * Math.PI / 180
     animationState.groups.powerups.add(powerup)
+  })
+  socket.on('game/start', (data) => {
+    gameStart = +(new Date())
   })
 
   document.querySelector('#submit-name').onclick = (e) => {
@@ -214,7 +221,7 @@ function update () {
         if (poly.contains(animationState.player.worldPosition.x, animationState.player.worldPosition.y)) {
           death()
           animationState.player.destroy()
-          player.die()
+          if (player.alive) player.die()
         }
       })
     })
@@ -324,6 +331,7 @@ function batchPolys (layout, color, width, distance) {
 }
 
 function death () {
+  gameStart = undefined
   if (animationState.groups.emitter.children.length === 0) {
     const emitter = game.add.emitter(animationState.player.worldPosition.x, animationState.player.worldPosition.y, 100)
     emitter.makeParticles('balls', [0, 1, 2, 3, 4, 5])

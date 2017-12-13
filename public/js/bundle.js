@@ -60,18 +60,31 @@
 /******/ 	__webpack_require__.p = "/";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 0);
+/******/ 	return __webpack_require__(__webpack_require__.s = 1);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, exports) {
+
+module.exports = function hexCorner (c, s, i) {
+  const degree = 60 * i + 30
+  const rad = Math.PI / 180 * degree
+  const x = c.x + s * Math.cos(rad)
+  const y = c.y + s * Math.sin(rad)
+  return { x, y }
+}
+
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-/* WEBPACK VAR INJECTION */(function(global) {const gameSettings = __webpack_require__(2)
-const deathMessages = __webpack_require__(3)
-const Player = __webpack_require__(4)
-const Animations = __webpack_require__(5)
-const controls = __webpack_require__(16)
+/* WEBPACK VAR INJECTION */(function(global) {const gameSettings = __webpack_require__(3)
+const deathMessages = __webpack_require__(4)
+const Player = __webpack_require__(5)
+const Animations = __webpack_require__(6)
+const controls = __webpack_require__(7)
 
 const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUTO, '', { preload, create, update, render })
 window.game = game
@@ -80,7 +93,7 @@ controls.add('right')
 controls.add('restart')
 controls.add('ready')
 
-let text, showText, socket, player
+let text, showText, socket, player, gameStart
 
 window.onload = () => {
   document.body.addEventListener('keyup', __webpack_require__(8)(player))
@@ -106,8 +119,12 @@ function showReadyText () {
 }
 
 function showPlayerTimer () {
-  const fixedLength = (player.time.toString().split('.')[1] || '').length
-  const timerText = showText(`${(player.time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, text.playerTime)
+  let time = player.funeral && player.birthday ? moment(player.funeral).diff(moment(player.birthday), 'seconds', true) : 0
+  if (gameStart) {
+    time = (player.funeral ? moment(player.funeral) : moment()).diff(moment(player.birthday), 'seconds', true)
+  }
+  const fixedLength = (time.toString().split('.')[1] || '').length
+  const timerText = showText(`${(time).toFixed(fixedLength < 2 ? fixedLength : 2)}s`, text.playerTime)
   // const nameText = showText(player.name, {
   //   y: 35,
   //   fontSize: 25
@@ -142,7 +159,7 @@ function preload () {
     document.querySelector('#game-state').innerHTML = `
       ${Object.keys(window.gameState).length} Players <br>
       ${Object.keys(window.gameState).map((player) => (
-        `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name} - ${window.gameState[player].time}`)).join('</b><br>'
+        `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name}`)).join('</b><br>'
       )}
     `
     if (animationState.groups.newRoundOverlay) {
@@ -164,6 +181,9 @@ function preload () {
     powerup.rotation = data.rotation * Math.PI / 180
     animationState.groups.powerups.add(powerup)
   })
+  socket.on('game/start', (data) => {
+    gameStart = +(new Date())
+  })
 
   document.querySelector('#submit-name').onclick = (e) => {
     e.preventDefault()
@@ -179,8 +199,8 @@ function preload () {
 }
 
 function create () {
-  text = __webpack_require__(6)(game)
-  showText = __webpack_require__(7)(game)
+  text = __webpack_require__(11)(game)
+  showText = __webpack_require__(12)(game)
   game.stage.backgroundColor = '#333333'
   controls.setup('left', game.input.keyboard.addKey(Phaser.Keyboard.LEFT))
   controls.setup('right', game.input.keyboard.addKey(Phaser.Keyboard.RIGHT))
@@ -283,7 +303,7 @@ function update () {
         if (poly.contains(animationState.player.worldPosition.x, animationState.player.worldPosition.y)) {
           death()
           animationState.player.destroy()
-          player.die()
+          if (player.alive) player.die()
         }
       })
     })
@@ -371,9 +391,9 @@ function createRing (data) {
   return ring
 }
 
-const hexCorner = __webpack_require__(14)
-const createPoly = __webpack_require__(11)(Phaser, game, gameSettings, animationState)
-const createPolyPartPoints = __webpack_require__(13)(game)
+const hexCorner = __webpack_require__(0)
+const createPoly = __webpack_require__(13)(Phaser, game, gameSettings, animationState)
+const createPolyPartPoints = __webpack_require__(14)(game)
 
 function batchPolys (layout, color, width, distance) {
   const graphics = game.add.graphics(0, 0)
@@ -393,6 +413,7 @@ function batchPolys (layout, color, width, distance) {
 }
 
 function death () {
+  gameStart = undefined
   if (animationState.groups.emitter.children.length === 0) {
     const emitter = game.add.emitter(animationState.player.worldPosition.x, animationState.player.worldPosition.y, 100)
     emitter.makeParticles('balls', [0, 1, 2, 3, 4, 5])
@@ -407,10 +428,10 @@ function death () {
   }
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(1)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(2)))
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 var g;
@@ -437,7 +458,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports) {
 
 module.exports = {
@@ -450,7 +471,7 @@ module.exports = {
 
 
 /***/ }),
-/* 3 */
+/* 4 */
 /***/ (function(module, exports) {
 
 module.exports = [
@@ -466,7 +487,7 @@ module.exports = [
 
 
 /***/ }),
-/* 4 */
+/* 5 */
 /***/ (function(module, exports) {
 
 class Player {
@@ -480,9 +501,7 @@ class Player {
     this.color = 'FFFFFF'
     this.alive = true
     this.birthday = undefined
-    this.time = 0
     this.funeral = undefined
-    this.heartbeat = this.beat()
     this.temporary = { special: {} }
     this.ready = false
   }
@@ -515,27 +534,17 @@ class Player {
     this.update()
   }
 
-  beat () {
-    return setInterval(() => {
-      const newTime = moment().diff(moment(this.birthday), 'seconds', true)
-      this.time = newTime > 0 ? newTime : 0
-      this.update()
-    }, 100)
-  }
-
   restart () {
     this.die()
     this.birthday = +(new Date())
-    this.time = 0
     this.funeral = undefined
     this.alive = true
     this.rotation = 0
-    this.heartbeat = this.beat()
     this.update()
   }
 
   die () {
-    clearInterval(this.heartbeat)
+    console.log('dying')
     this.funeral = +(new Date())
     this.alive = false
     this.ready = false
@@ -555,7 +564,6 @@ class Player {
       shape: this.shape,
       color: this.color,
       alive: this.alive,
-      time: this.time,
       ready: this.ready
     }
   }
@@ -565,7 +573,7 @@ module.exports = Player
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports) {
 
 class Animations {
@@ -595,61 +603,25 @@ module.exports = Animations
 
 
 /***/ }),
-/* 6 */
-/***/ (function(module, exports) {
-
-module.exports = function createTextSettings (game) {
-  return (
-    { death: {
-        fontSize: 60
-      },
-      reset: {
-        y: game.world.centerY + 200
-      },
-      ready: {
-        y: game.world.centerY + 250
-      },
-      newRound: {
-        fontSize: 60
-      },
-      playerTime: {
-        y: 75,
-        fontSize: 30
-      }
-    }
-  )
-}
-
-
-/***/ }),
 /* 7 */
 /***/ (function(module, exports) {
 
-module.exports = function createRenderText (game) {
-  return function renderText (textBody, options) {
-    options = Object.assign({
-      x: game.world.centerX,
-      y: game.world.centerY,
-      anchor: 0.5,
-      font: 'Revalia',
-      fontSize: 20,
-      align: 'center',
-      tint: animationState.background.tint,
-      stroke: '#000000',
-      strokeThickness: 2,
-      shadow: [ 5, 5, 'rgba(0,0,0,0.5)', 5 ]
-    }, options)
-    const text = game.add.text(options.x, options.y, textBody)
-    text.anchor.setTo(options.anchor)
-    text.font = options.font
-    text.fontSize = options.fontSize
-    text.align = options.align
-    if (options.tint) text.fill = `#${options.tint}`
-    if (options.stroke) text.stroke = options.stroke
-    if (options.strokeThickness) text.strokeThickness = options.strokeThickness
-    if (options.shadow) text.setShadow.apply(text, options.shadow)
-    return text
-  }
+const controls = {}
+
+module.exports = {
+  add, setup, isDown
+}
+
+function add (control) {
+  controls[control] = {}
+}
+
+function setup (control, key) {
+  controls[control] = key
+}
+
+function isDown (control) {
+  return controls[control].isDown
 }
 
 
@@ -711,9 +683,68 @@ module.exports = function loadAssets (game) {
 
 /***/ }),
 /* 11 */
+/***/ (function(module, exports) {
+
+module.exports = function createTextSettings (game) {
+  return (
+    { death: {
+        fontSize: 60
+      },
+      reset: {
+        y: game.world.centerY + 200
+      },
+      ready: {
+        y: game.world.centerY + 250
+      },
+      newRound: {
+        fontSize: 60
+      },
+      playerTime: {
+        y: 75,
+        fontSize: 30
+      }
+    }
+  )
+}
+
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports) {
+
+module.exports = function createRenderText (game) {
+  return function renderText (textBody, options) {
+    options = Object.assign({
+      x: game.world.centerX,
+      y: game.world.centerY,
+      anchor: 0.5,
+      font: 'Revalia',
+      fontSize: 20,
+      align: 'center',
+      tint: animationState.background.tint,
+      stroke: '#000000',
+      strokeThickness: 2,
+      shadow: [ 5, 5, 'rgba(0,0,0,0.5)', 5 ]
+    }, options)
+    const text = game.add.text(options.x, options.y, textBody)
+    text.anchor.setTo(options.anchor)
+    text.font = options.font
+    text.fontSize = options.fontSize
+    text.align = options.align
+    if (options.tint) text.fill = `#${options.tint}`
+    if (options.stroke) text.stroke = options.stroke
+    if (options.strokeThickness) text.strokeThickness = options.strokeThickness
+    if (options.shadow) text.setShadow.apply(text, options.shadow)
+    return text
+  }
+}
+
+
+/***/ }),
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const hexCorner = __webpack_require__(14)
+const hexCorner = __webpack_require__(0)
 
 module.exports = function createFunc (Phaser, game, gameSettings, animationState) {
   return function createPoly (i, color) {
@@ -733,11 +764,10 @@ module.exports = function createFunc (Phaser, game, gameSettings, animationState
 
 
 /***/ }),
-/* 12 */,
-/* 13 */
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-const hexCorner = __webpack_require__(14)
+const hexCorner = __webpack_require__(0)
 
 module.exports = function createFunc (game) {
   return function createPolyPartPoints (i, width, distance) {
@@ -749,43 +779,6 @@ module.exports = function createFunc (game) {
     points.push(hexCorner({ x: game.world.centerX, y: game.world.centerY }, distance + width, i))
     return points
   }
-}
-
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports) {
-
-module.exports = function hexCorner (c, s, i) {
-  const degree = 60 * i + 30
-  const rad = Math.PI / 180 * degree
-  const x = c.x + s * Math.cos(rad)
-  const y = c.y + s * Math.sin(rad)
-  return { x, y }
-}
-
-
-/***/ }),
-/* 15 */,
-/* 16 */
-/***/ (function(module, exports) {
-
-const controls = {}
-
-module.exports = {
-  add, setup, isDown
-}
-
-function add (control) {
-  controls[control] = {}
-}
-
-function setup (control, key) {
-  controls[control] = key
-}
-
-function isDown (control) {
-  return controls[control].isDown
 }
 
 
