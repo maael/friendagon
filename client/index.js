@@ -153,8 +153,8 @@ function renderSettings () {
     animationState.groups.settings && animationState.groups.settings.removeAll()
   })
   panel.add(slider)
-  panel.add(new SlickUI.Element.Text(10,10, 'Settings')).centerHorizontally().text.alpha = 0.75;
-  panel.add(new SlickUI.Element.Text(10,40, 'Volume')).centerHorizontally().text.alpha = 0.7;
+  panel.add(new SlickUI.Element.Text(10, 10, 'Settings')).centerHorizontally().text.alpha = 0.75
+  panel.add(new SlickUI.Element.Text(10, 40, 'Volume')).centerHorizontally().text.alpha = 0.7
   slider.onDrag.add((value) => {
     animationState.music.volume = value
   })
