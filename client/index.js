@@ -147,7 +147,7 @@ function renderSettings () {
   const slider = new SlickUI.Element.Slider(16, 100, panel.width - 32, animationState.music.volume)
   const button = new SlickUI.Element.Button((panel.width / 2 - 50), 130, 100, 40)
   panel.add(button)
-  button.add(new SlickUI.Element.Text(0, 0, 'Save')).center()
+  button.add(new SlickUI.Element.Text(0,0, 'Save')).center()
   button.events.onInputUp.add(() => {
     animationState.ui.container.remove(panel)
     animationState.groups.settings && animationState.groups.settings.removeAll()
