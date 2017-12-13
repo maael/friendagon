@@ -15,5 +15,6 @@ module.exports = {
     hud: undefined,
     settings: undefined
   },
-  music: undefined
+  music: undefined,
+  ui: undefined
 }
