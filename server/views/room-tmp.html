@@ -4,20 +4,22 @@
     <link rel='stylesheet' href='/public/styles/index.css'>
   </head>
   <body>
-    <h1>Colours, Puns, and Trippy Music: The Adventure: The Game</h1>
-    <div id='game-state'></div>
-    <form>
-      <input id='user-name' type='text' name='name' />
-      <select id='user-shape'>
-        <option value='triangle'>Triangle</option>
-        <option value='square'>Square</option>
-        <option value='circle'>Circle</option>
-        <option value='hexagon'>Hexagon</option>
-        <option value='diamond'>Diamond</option>
-        <option value='asterisk'>Asterisk</option>
-      </select>
-      <button id='submit-name'>Set</button>
-    </form>
+    <div style='display:none;'>
+      <h1>Colours, Puns, and Trippy Music: The Adventure: The Game</h1>
+      <div id='game-state'></div>
+      <form>
+        <input id='user-name' type='text' name='name' />
+        <select id='user-shape'>
+          <option value='triangle'>Triangle</option>
+          <option value='square'>Square</option>
+          <option value='circle'>Circle</option>
+          <option value='hexagon'>Hexagon</option>
+          <option value='diamond'>Diamond</option>
+          <option value='asterisk'>Asterisk</option>
+        </select>
+        <button id='submit-name'>Set</button>
+      </form>
+    </div>
     <script type='text/javascript' src='/public/js/randomColor.js'></script>
     <script type='text/javascript' src='/public/js/moment.min.js'></script>
     <script type='text/javascript' src='/public/js/socket.js'></script>

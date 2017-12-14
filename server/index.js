@@ -82,7 +82,10 @@ io.sockets.on('connection', (socket) => {
   })
 
   socket.on('game/player/powerup', (data) => {
-    console.log('applying', data, 'to all but', socket.id)
+    io.to(room).emit('game/player/powerup/use', Object.assign(data, {
+      powerup: data.powerup.replace(/^powerup_/, ''),
+      activedBy: socket.id
+    }))
   })
 
   socket.on('disconnect', (a, b, c, d) => {
@@ -131,11 +134,11 @@ function startGame (io, data) {
   const powerups = [
     'speedup',
     'audio',
-    'limit',
+    // 'limit',
     'multiplier',
     'epileptic',
-    'swap',
-    'steal',
+    // 'swap',
+    // 'steal',
     'invert'
   ]
   io.to(data.room).emit('game/start')
@@ -145,7 +148,7 @@ function startGame (io, data) {
       ring: presets[selected]
     })
     const sendPowerup = Math.floor(Math.random() * 100)
-    if (sendPowerup > 85) {
+    if (sendPowerup > 5) {
       const selectedPow = Math.floor(Math.random() * powerups.length)
       io.to(data.room).emit('game/update/powerup', {
         powerup: powerups[selectedPow],

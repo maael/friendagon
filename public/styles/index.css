@@ -3,3 +3,8 @@ canvas {
   left: 50%;
   transform: translateX(-50%);
 }
+
+html, body {
+  margin: 0;
+  padding: 0;
+}

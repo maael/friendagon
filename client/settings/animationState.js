@@ -12,6 +12,7 @@ module.exports = {
     deathOverlay: undefined,
     readyOverlay: undefined,
     newRoundOverlay: undefined,
+    playerDetails: undefined,
     hud: undefined,
     settings: undefined
   },

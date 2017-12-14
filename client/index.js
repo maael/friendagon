@@ -94,7 +94,19 @@ function preload () {
     animationState.groups.rings.add(ring.graphic)
   })
   socket.on('game/update/powerup', (data) => {
-    const powerup = createSprite('ff00ff', { offset: 0, special: { sprite: 'nug' } })
+    const powerupSpriteMap = {
+      speedup: 'powerup_speedup',
+      multiplier: 'powerup_multipler',
+      epileptic: 'powerup_epileptic',
+      invert: 'powerup_invert'
+    }
+    const type = data.powerup
+    const sprite = powerupSpriteMap[type] || 'nug'
+    const powerup = createSprite('ff00ff', { offset: 0, special: { sprite } })
+    if (sprite !== 'nug') {
+      powerup.scale.setTo(0.3, 0.3)
+      powerup.tint = `0x${animationState.background.tint}`
+    }
     powerup.anchor.set(0.5, 0.5)
     powerup.pivot.x = game.world.width * 2
     powerup.rotation = data.rotation * Math.PI / 180
@@ -102,6 +114,13 @@ function preload () {
   })
   socket.on('game/start', (data) => {
     gameStart = +(new Date())
+  })
+  socket.on('game/player/powerup/use', (data) => {
+    if (socket.id !== data.activedBy) {
+      console.log('activing powerup', data)
+    } else {
+      console.log('we did this')
+    }
   })
 
   document.querySelector('#submit-name').onclick = (e) => {
@@ -142,30 +161,55 @@ function create () {
 }
 
 function renderSettings () {
-  const panel = new SlickUI.Element.Panel(200, 200, game.width - 400, game.height - 800)
+  animationState.ui.container.children.forEach((child) => animationState.ui.container.remove(child))
+  animationState.groups.settings && animationState.groups.settings.removeAll()
+  const panel = new SlickUI.Element.Panel(game.width * 0.25, game.height * 0.15, game.width - (game.width * 0.5), game.height - (game.height * 0.3))
   animationState.ui.add(panel)
-  const slider = new SlickUI.Element.Slider(16, 100, panel.width - 32, animationState.music.volume)
-  const button = new SlickUI.Element.Button((panel.width / 2 - 50), 130, 100, 40)
-  panel.add(button)
-  button.add(new SlickUI.Element.Text(0,0, 'Save')).center()
-  button.events.onInputUp.add(() => {
+  const volumeSlider = new SlickUI.Element.Slider(16, 100, panel.width - 32, animationState.music.volume)
+  const saveButton = new SlickUI.Element.Button((panel.width / 2 - 50), (panel.height - 60), 100, 40)
+  panel.add(saveButton)
+  saveButton.add(new SlickUI.Element.Text(0, 0 , 'Save')).center()
+  saveButton.events.onInputUp.add(() => {
     animationState.ui.container.remove(panel)
     animationState.groups.settings && animationState.groups.settings.removeAll()
   })
-  panel.add(slider)
+  panel.add(volumeSlider)
   panel.add(new SlickUI.Element.Text(10, 10, 'Settings')).centerHorizontally().text.alpha = 0.75
-  panel.add(new SlickUI.Element.Text(10, 40, 'Volume')).centerHorizontally().text.alpha = 0.7
-  slider.onDrag.add((value) => {
-    animationState.music.volume = value
-  })
+  panel.add(new SlickUI.Element.Text(10, 60, 'Volume')).centerHorizontally().text.alpha = 0.7
+  panel.add(new SlickUI.Element.Text(10, 60 + (game.height * 0.14), 'Player Shape')).centerHorizontally().text.alpha = 0.7
+  panel.add(new SlickUI.Element.Text(10, 60 + (game.height * 0.28), 'Player Colour')).centerHorizontally().text.alpha = 0.7
+  panel.add(new SlickUI.Element.Text(10, 60 + (game.height * 0.42), 'Player Name')).centerHorizontally().text.alpha = 0.7
+  volumeSlider.onDrag.add((value) => { animationState.music.volume = value })
   animationState.groups.settings = animationState.ui.container.displayGroup
   game.world.bringToTop(animationState.groups.settings)
+}
+
+function renderPlayersDetails () {
+  animationState.groups.playerDetails.removeAll()
+  Object.keys(window.gameState).forEach((player, i, players) => (
+    renderPlayerDetails(window.gameState[player], i, players)
+  ))
+}
+
+function renderPlayerDetails (player, i, players) {
+  const spacing = 90
+  const left = game.height / (40 + (players.length * spacing)) > 1
+  const playerText = showText(`${player.name}`, {
+    x: left ? 160 : game.width - 160,
+    y: 40 + (i * spacing)
+  })
+  const playerTimeText = showText(`Ready: ${player.ready ? '✓' : '✖'}`, {
+    x: left ? 160 : game.width - 160,
+    y: 70 + (i * spacing)
+  })
+  animationState.groups.playerDetails.add(playerText)
+  animationState.groups.playerDetails.add(playerTimeText)
 }
 
 function update () {
   if (controls.isDown('left')) player.rotate(-1)
   if (controls.isDown('right')) player.rotate(1)
-  if (controls.isDown('ready')) player.setReady()
+  if (controls.isDown('ready') && player.alive) player.setReady()
   if (controls.isDown('restart')) {
     player.restart()
     animationState.groups.emitter.removeAll()
@@ -277,7 +321,7 @@ function update () {
 }
 
 function render () {
-
+  renderPlayersDetails()
 }
 
 function createSprite (color, options) {
@@ -331,7 +375,7 @@ function createBackground () {
 
 function createRing (data) {
   const width = 20 + Math.floor(Math.random() * 100)
-  const state = { distance: 800, layout: data, color: 0x444444, width }
+  const state = { distance: Math.max(gameSettings.width, gameSettings.height), layout: data, color: 0x444444, width }
   const polyData = batchPolys(state.layout, state.color, state.width, state.distance)
   const ring = { state, graphic: polyData.graphic, polys: polyData.polys }
   animationState.rings.push(ring)
