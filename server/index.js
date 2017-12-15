@@ -136,11 +136,11 @@ function startGame (io, data) {
   const powerups = [
     'speedup',
     'audio',
-    // 'limit',
+    'limit',
     'multiplier',
     'epileptic',
-    // 'swap',
-    // 'steal',
+    'swap',
+    'steal',
     'invert'
   ]
   io.to(data.room).emit('game/start')
@@ -150,7 +150,7 @@ function startGame (io, data) {
       ring: presets[selected]
     })
     const sendPowerup = Math.floor(Math.random() * 100)
-    if (sendPowerup > 5) {
+    if (sendPowerup > 50) {
       const selectedPow = Math.floor(Math.random() * powerups.length)
       io.to(data.room).emit('game/update/powerup', {
         powerup: powerups[selectedPow],
