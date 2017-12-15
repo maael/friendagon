@@ -95,6 +95,8 @@ io.sockets.on('connection', (socket) => {
         clearInterval(games[room])
         delete games[room]
         delete gameStates[room]
+      } else {
+        io.to(room).emit('game/update', gameStates[room])
       }
       const connected = io.sockets.adapter.rooms[room] && Object.keys(io.sockets.adapter.rooms[room].sockets)
       if (connected) io.to(room).emit('room/change', { room: room, connected })
