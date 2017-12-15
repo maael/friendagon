@@ -235,7 +235,11 @@ function update () {
           animationState.players[playerId].rotation = window.gameState[playerId].rotation * Math.PI / 180
         }
       } else {
-        if (animationState.players[playerId]) animationState.players[playerId].destroy()
+        if (animationState.players[playerId]) {
+          animationState.players[playerId].destroy()
+          animationState.groups.players.remove(animationState.players[playerId])
+          delete animationState.players[playerId]
+        }
       }
     } else {
       if (player.alive) {
