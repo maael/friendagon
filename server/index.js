@@ -41,6 +41,7 @@ server.listen(process.env.PORT || 3000)
 
 let gameStates = {}
 let games = {}
+let updates = {}
 
 app.get('/api/rooms', (req, res) => {
   res.send(gameStates)
@@ -53,11 +54,13 @@ io.sockets.on('connection', (socket) => {
   socket.on('room/join', (data) => {
     socket.join(data.room)
     room = data.room
+    const newRoom = !!!gameStates[room]
     gameStates[room] = gameStates[room] || {}
     gameStates[room][socket.id] = { rotation: 0 }
     const connected = Object.keys(io.sockets.adapter.rooms[data.room].sockets)
     socket.emit('player/name', { name: sillyname(), shape: shapes[0], color: randomColor({ luminosity: 'light' }).replace('#', ''), alive: true })
     io.to(data.room).emit('room/change', { room: data.room, connected })
+    if (newRoom) updates[room] = scheduleUpdates(io, data.room)
   })
 
   socket.on('game/player/update', (data) => {
@@ -70,7 +73,6 @@ io.sockets.on('connection', (socket) => {
       time: data.time,
       ready: data.ready
     })
-    io.to(data.room).emit('game/update', gameStates[data.room])
     const allReady = Object.keys(gameStates[data.room]).every((s) => gameStates[data.room][s].ready)
     const allDead = Object.keys(gameStates[data.room]).every((s) => !gameStates[data.room][s].alive)
     if (allReady && !allDead && !games[room]) {
@@ -93,13 +95,13 @@ io.sockets.on('connection', (socket) => {
       delete gameStates[room][socket.id]
       if (!Object.keys(gameStates[room]).length) {
         clearInterval(games[room])
+        clearInterval(updates[room])
         delete games[room]
         delete gameStates[room]
-      } else {
-        io.to(room).emit('game/update', gameStates[room])
+        delete updates[room]
+        const connected = io.sockets.adapter.rooms[room] && Object.keys(io.sockets.adapter.rooms[room].sockets)
+        if (connected) io.to(room).emit('room/change', { room: room, connected })
       }
-      const connected = io.sockets.adapter.rooms[room] && Object.keys(io.sockets.adapter.rooms[room].sockets)
-      if (connected) io.to(room).emit('room/change', { room: room, connected })
     }
   })
 })
@@ -112,8 +114,13 @@ function getRotations (base, adjustments) {
   )))
 }
 
+function scheduleUpdates (io, room) {
+  return setInterval(() => {
+    io.to(room).emit('game/update', gameStates[room])
+  }, 1000)
+}
+
 function startGame (io, data) {
-  console.log('GAME STARTED')
   const presets = getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 }, { i: 4, offset: 0 } ], [ 1, 2, 3, 4, 5 ])
     .concat(getRotations([ { i: 0, offset: -175 }, { i: 1, offset: 175 }, { i: 2, offset: -175 }, { i: 3, offset: 175 }, { i: 4, offset: -175 }, { i: 5, offset: 175 } ], [1]))
     .concat(getRotations([ { i: 0, offset: 0 }, { i: 1, offset: 0 }, { i: 2, offset: 0 }, { i: 3, offset: 0 } ], [ 1, 2, 3, 4, 5 ]))

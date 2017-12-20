@@ -6,6 +6,7 @@ const controls = require('./util/controls')
 
 const game = new Phaser.Game(gameSettings.width, gameSettings.height, Phaser.AUTO, '', { preload, create, update, render })
 window.game = game
+window.gameState = {}
 controls.add('left')
 controls.add('right')
 controls.add('restart')

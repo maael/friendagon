@@ -31,6 +31,13 @@
     "webpack": "^3.10.0"
   },
   "standard": {
-    "globals": [ "Phaser", "fetch", "moment", "io", "randomColor", "SlickUI" ]
+    "globals": [
+      "Phaser",
+      "fetch",
+      "moment",
+      "io",
+      "randomColor",
+      "SlickUI"
+    ]
   }
 }
