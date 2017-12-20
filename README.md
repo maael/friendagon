@@ -1,8 +1,7 @@
 <p align="center">
   <img src="../master/assets/friendagon.png?raw=true" alt="Friendagon"/>
 </p>
-
-# Friendagon
+<hr />
 
 <p align="center">
   <img src="../master/assets/dead.jpg?raw=true" alt="Friendagon Dead Screen"/>
