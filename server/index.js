@@ -54,7 +54,7 @@ io.sockets.on('connection', (socket) => {
   socket.on('room/join', (data) => {
     socket.join(data.room)
     room = data.room
-    const newRoom = !!!gameStates[room]
+    const newRoom = !gameStates[room]
     gameStates[room] = gameStates[room] || {}
     gameStates[room][socket.id] = { rotation: 0 }
     const connected = Object.keys(io.sockets.adapter.rooms[data.room].sockets)

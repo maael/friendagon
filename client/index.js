@@ -142,7 +142,7 @@ function preload () {
   game.animations = new Animations(game)
   animationState.ui = game.plugins.add(Phaser.Plugin.SlickUI)
   animationState.ui.load('/public/js/kenney-theme/kenney.json')
-  //game.debug.geom(new Phaser.Point((game.world.centerX), (game.world.centerY)), '#ffff00')
+  // game.debug.geom(new Phaser.Point((game.world.centerX), (game.world.centerY)), '#ffff00')
 }
 
 function create () {
