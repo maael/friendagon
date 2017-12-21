@@ -75,7 +75,7 @@ function preload () {
     console.log('change!', data)
   })
   socket.on('game/update', (data) => {
-    const inTime = moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second')
+    const inTime = moment.utc(data.t).isAfter(moment.utc().subtract(2, 'seconds'), 'second')
     const visible = !document.hidden
     if (inTime && visible) {
       delete data.t
@@ -94,17 +94,17 @@ function preload () {
         }
       }
     } else {
-      console.warn('Rejected', 'game/update', 'due to', !inTime && 'outdated update', !visible && 'not visible')
+      console.warn('Rejected', 'game/update', 'due to', !inTime ? `outdated update (${data.t})` : '', !visible ? 'not visible' : '')
     }
   })
   socket.on('game/update/ring', (data) => {
-    const inTime = moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second')
+    const inTime = moment.utc(data.t).isAfter(moment.utc().subtract(1, 'seconds'), 'second')
     const visible = !document.hidden
     if (inTime && visible) {
       const ring = createRing(data.ring)
       animationState.groups.rings.add(ring.graphic)
     } else {
-      console.warn('Rejected', 'game/update', 'due to', !inTime && 'outdated update', !visible && 'not visible')
+      console.warn('Rejected', 'game/update', 'due to', !inTime ? `outdated update (${data.t})` : '', !visible ? 'not visible' : '')
     }
   })
   socket.on('game/update/powerup', (data) => {

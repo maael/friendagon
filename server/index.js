@@ -10,6 +10,7 @@ dotenv.load()
 
 const sillyname = require('sillyname')
 const randomColor = require('randomcolor')
+const moment = require('moment')
 
 app.set('views', path.join(__dirname, 'views'))
 
@@ -116,7 +117,7 @@ function getRotations (base, adjustments) {
 
 function scheduleUpdates (io, room) {
   return setInterval(() => {
-    io.to(room).emit('game/update', Object.assign({ t: +(new Date()) }, gameStates[room]))
+    io.to(room).emit('game/update', Object.assign({ t: +(moment.utc()) }, gameStates[room]))
   }, 1000)
 }
 
@@ -155,7 +156,7 @@ function startGame (io, data) {
     const selected = Math.floor(Math.random() * presets.length)
     io.to(data.room).emit('game/update/ring', {
       ring: presets[selected],
-      t: +(new Date())
+      t: +(moment.utc())
     })
     const sendPowerup = Math.floor(Math.random() * 100)
     if (sendPowerup > 50) {
