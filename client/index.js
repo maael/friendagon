@@ -60,6 +60,16 @@ function showNewRoundText () {
 const animationState = require('./settings/animationState')
 window.animationState = animationState
 
+function confirmUpdate (data) {
+  const inTime = true // moment.utc(data.t).isAfter(moment.utc().subtract(2, 'seconds'), 'second')
+  const visible = !document.hidden
+  if (!inTime || !visible) {
+    console.warn('Rejected', 'game/update', 'due to', !inTime ? `outdated update (${data.t})` : '', !visible ? 'not visible' : '')
+  }
+  delete data.t
+  return inTime && visible
+}
+
 function preload () {
   socket = io.connect()
   const room = window.location.pathname.split('/').pop()
@@ -75,10 +85,7 @@ function preload () {
     console.log('change!', data)
   })
   socket.on('game/update', (data) => {
-    const inTime = moment.utc(data.t).isAfter(moment.utc().subtract(2, 'seconds'), 'second')
-    const visible = !document.hidden
-    if (inTime && visible) {
-      delete data.t
+    if (confirmUpdate(data)) {
       window.gameState = data
       document.querySelector('#game-state').innerHTML = `
         ${Object.keys(window.gameState).length} Players <br>
@@ -93,18 +100,12 @@ function preload () {
           animationState.groups.newRoundOverlay.removeAll()
         }
       }
-    } else {
-      console.warn('Rejected', 'game/update', 'due to', !inTime ? `outdated update (${data.t})` : '', !visible ? 'not visible' : '')
     }
   })
   socket.on('game/update/ring', (data) => {
-    const inTime = moment.utc(data.t).isAfter(moment.utc().subtract(1, 'seconds'), 'second')
-    const visible = !document.hidden
-    if (inTime && visible) {
+    if (confirmUpdate(data)) {
       const ring = createRing(data.ring)
       animationState.groups.rings.add(ring.graphic)
-    } else {
-      console.warn('Rejected', 'game/update', 'due to', !inTime ? `outdated update (${data.t})` : '', !visible ? 'not visible' : '')
     }
   })
   socket.on('game/update/powerup', (data) => {
