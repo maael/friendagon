@@ -3,6 +3,8 @@ pipeline:
     image: node:9.2
     commands:
       - npm install
+      - npm run build
+      - npm run lint
   publish:
     app: hex.maelphick.com
     when:
