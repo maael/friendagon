@@ -75,7 +75,9 @@ function preload () {
     console.log('change!', data)
   })
   socket.on('game/update', (data) => {
-    if (moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second') && !document.hidden) {
+    const inTime = moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second')
+    const visible = !document.hidden
+    if (inTime && visible) {
       delete data.t
       window.gameState = data
       document.querySelector('#game-state').innerHTML = `
@@ -91,12 +93,18 @@ function preload () {
           animationState.groups.newRoundOverlay.removeAll()
         }
       }
+    } else {
+      console.warn('Rejected', 'game/update', 'due to', !inTime && 'outdated update', !visible && 'not visible')
     }
   })
   socket.on('game/update/ring', (data) => {
-    if (moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second') && !document.hidden) {
+    const inTime = moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second')
+    const visible = !document.hidden
+    if (inTime && visible) {
       const ring = createRing(data.ring)
       animationState.groups.rings.add(ring.graphic)
+    } else {
+      console.warn('Rejected', 'game/update', 'due to', !inTime && 'outdated update', !visible && 'not visible')
     }
   })
   socket.on('game/update/powerup', (data) => {
