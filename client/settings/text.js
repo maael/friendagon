@@ -1,8 +1,8 @@
 module.exports = function createTextSettings (game) {
   return (
-  { death: {
-    fontSize: 60
-  },
+    { death: {
+      fontSize: 60
+    },
     reset: {
       y: game.world.centerY + 200
     },

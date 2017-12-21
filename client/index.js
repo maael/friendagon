@@ -75,24 +75,29 @@ function preload () {
     console.log('change!', data)
   })
   socket.on('game/update', (data) => {
-    window.gameState = data
-    document.querySelector('#game-state').innerHTML = `
-      ${Object.keys(window.gameState).length} Players <br>
-      ${Object.keys(window.gameState).map((player) => (
-        `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name}`)).join('</b><br>'
-      )}
-    `
-    if (animationState.groups.newRoundOverlay) {
-      if (Object.keys(window.gameState).every((p) => window.gameState[p].ready) && animationState.groups.rings.children.length === 0) {
-        showNewRoundText()
-      } else {
-        animationState.groups.newRoundOverlay.removeAll()
+    if (moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second') && !document.hidden) {
+      delete data.t
+      window.gameState = data
+      document.querySelector('#game-state').innerHTML = `
+        ${Object.keys(window.gameState).length} Players <br>
+        ${Object.keys(window.gameState).map((player) => (
+          `<b style='color: #${window.gameState[player].alive ? window.gameState[player].color : '000000'}'>(${window.gameState[player].ready ? 'Ready' : 'Not ready'}) ${window.gameState[player].name}`)).join('</b><br>'
+        )}
+      `
+      if (animationState.groups.newRoundOverlay) {
+        if (Object.keys(window.gameState).every((p) => window.gameState[p].ready) && animationState.groups.rings.children.length === 0) {
+          showNewRoundText()
+        } else {
+          animationState.groups.newRoundOverlay.removeAll()
+        }
       }
     }
   })
   socket.on('game/update/ring', (data) => {
-    const ring = createRing(data.ring)
-    animationState.groups.rings.add(ring.graphic)
+    if (moment(data.t).isAfter(moment().subtract(1, 'seconds'), 'second') && !document.hidden) {
+      const ring = createRing(data.ring)
+      animationState.groups.rings.add(ring.graphic)
+    }
   })
   socket.on('game/update/powerup', (data) => {
     const powerupSpriteMap = {
@@ -137,6 +142,7 @@ function preload () {
   game.animations = new Animations(game)
   animationState.ui = game.plugins.add(Phaser.Plugin.SlickUI)
   animationState.ui.load('/public/js/kenney-theme/kenney.json')
+  //game.debug.geom(new Phaser.Point((game.world.centerX), (game.world.centerY)), '#ffff00')
 }
 
 function create () {
@@ -387,7 +393,7 @@ function createRing (data) {
   return ring
 }
 
-const createPoly = require('./util/render/geometry/createPoly')(Phaser, game, gameSettings, animationState)
+const createPoly = require('./util/render/geometry/createPoly')(Phaser, game, animationState)
 const createPolyPartPoints = require('./util/render/geometry/createPolyPartPoints')(game)
 
 function batchPolys (layout, color, width, distance) {
